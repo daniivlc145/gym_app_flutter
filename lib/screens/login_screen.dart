@@ -1,0 +1,122 @@
+import 'package:flutter/material.dart';
+import 'package:gym_app/screens/home_screen.dart';
+import 'package:gym_app/screens/forgot_password_screen.dart';
+import 'package:gym_app/screens/signup_screen.dart';
+import 'package:gym_app/utils/validators.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+
+class LoginScreen extends StatelessWidget {
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(''),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'INICIO DE SESIÓN',
+              style: TextStyle(
+                color: Color(0xff38434E),
+                fontSize: 30,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 40),
+            Form(
+              key: _formKey,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 300,
+                    child: TextFormField(
+                      controller: _emailController,
+                      decoration: InputDecoration(
+                        prefixIcon: Icon(Icons.email),
+                        border: OutlineInputBorder(
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(50))),
+                        labelText: 'Correo Electrónico',
+                      ),
+                      validator: (value) => Validators.validateEmail(value),
+                    ),
+                  ),
+                  const SizedBox(height: 25),
+                  SizedBox(
+                    width: 300,
+                    child: TextFormField(
+                      controller: _passwordController,
+                      decoration: InputDecoration(
+                        prefixIcon: Icon(Icons.lock),
+                        border: OutlineInputBorder(
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(50))),
+                        labelText: 'Contraseña',
+                      ),
+                      obscureText: true,
+                      validator: (value) => Validators.validatePassword(value),
+                    ),
+                  ),
+                  const SizedBox(height: 25),
+                  ElevatedButton(
+                    onPressed: () {},
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xff1ABC9C),
+                    ),
+                    child: const Text(
+                      'CONTINUAR',
+                      style: TextStyle(
+                          color: Color(0xffECF0F1),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16),
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  InkWell(
+                    onTap: () {},
+                    child: Text(
+                      '¿Has olvidado tu contraseña?',
+                      style: TextStyle(
+                        color: Color(0xff38434E),
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SignInWithAppleButton(
+                        onPressed: () {
+                          // Aquí irá la lógica para manejar el inicio de sesión con Apple
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 35),
+                  InkWell(
+                    onTap: () {},
+                    child: Text(
+                      'Regístrate aquí',
+                      style: TextStyle(
+                          color: Color(0xff38434E),
+                          decoration: TextDecoration.underline,
+                          fontSize: 18),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
