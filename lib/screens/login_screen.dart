@@ -42,7 +42,7 @@ class LoginScreen extends StatelessWidget {
                         prefixIcon: Icon(Icons.email),
                         border: OutlineInputBorder(
                             borderRadius:
-                                BorderRadius.all(Radius.circular(50))),
+                            BorderRadius.all(Radius.circular(50))),
                         labelText: 'Correo Electrónico',
                       ),
                       validator: (value) => Validators.validateEmail(value),
@@ -57,7 +57,7 @@ class LoginScreen extends StatelessWidget {
                         prefixIcon: Icon(Icons.lock),
                         border: OutlineInputBorder(
                             borderRadius:
-                                BorderRadius.all(Radius.circular(50))),
+                            BorderRadius.all(Radius.circular(50))),
                         labelText: 'Contraseña',
                       ),
                       obscureText: true,
@@ -80,29 +80,39 @@ class LoginScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 15),
                   InkWell(
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => ForgotPassword()),
+                      );
+                    },
                     child: Text(
                       '¿Has olvidado tu contraseña?',
                       style: TextStyle(
                         color: Color(0xff38434E),
                         decoration: TextDecoration.underline,
+                        fontSize: 16
                       ),
                     ),
                   ),
-                  const SizedBox(height: 15),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SignInWithAppleButton(
-                        onPressed: () {
-                          // Aquí irá la lógica para manejar el inicio de sesión con Apple
-                        },
-                      ),
-                    ],
+                  const SizedBox(height: 25),
+                  SizedBox(
+                    width: 180,
+                    height: 60,
+                    child: SignInWithAppleButton(
+                      onPressed: () {
+
+                      },
+                    ),
                   ),
                   const SizedBox(height: 35),
                   InkWell(
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => SignupScreen()),
+                      );
+                    },
                     child: Text(
                       'Regístrate aquí',
                       style: TextStyle(
