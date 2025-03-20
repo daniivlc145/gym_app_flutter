@@ -45,7 +45,7 @@ class LoginScreen extends StatelessWidget {
                             BorderRadius.all(Radius.circular(50))),
                         labelText: 'Correo Electrónico',
                       ),
-                      validator: (value) => Validators.validateEmail(value),
+                      validator: (value) => Validators.validateEmail(value ?? ''),
                     ),
                   ),
                   const SizedBox(height: 25),

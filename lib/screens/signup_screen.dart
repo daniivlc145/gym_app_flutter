@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:gym_app/screens/login_screen.dart';
 import 'package:gym_app/utils/validators.dart';
+import 'package:gym_app/services/auth_service.dart';
 
 class SignupScreen extends StatelessWidget {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _nombreUsuarioController = TextEditingController();
+  final TextEditingController _nombreUsuarioController =
+      TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _nombreController = TextEditingController();
   final TextEditingController _apellidosController = TextEditingController();
@@ -55,6 +57,9 @@ class SignupScreen extends StatelessWidget {
                         labelText: 'Nombre de usuario',
                       ),
                       validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Por favor ingrese su nombre de usuario';
+                        }
                         return null;
                       },
                     ),
@@ -71,9 +76,8 @@ class SignupScreen extends StatelessWidget {
                         ),
                         labelText: 'Correo Electrónico',
                       ),
-                      validator: (value) {
-                        return null;
-                      },
+                      validator: (value) =>
+                          Validators.validateEmail(value ?? ''),
                     ),
                   ),
                   const SizedBox(height: 25),
@@ -89,6 +93,9 @@ class SignupScreen extends StatelessWidget {
                         labelText: 'Nombre',
                       ),
                       validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Por favor ingrese su nombre';
+                        }
                         return null;
                       },
                     ),
@@ -106,6 +113,9 @@ class SignupScreen extends StatelessWidget {
                         labelText: 'Apellidos',
                       ),
                       validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Por favor ingrese sus apellidos';
+                        }
                         return null;
                       },
                     ),
@@ -142,7 +152,8 @@ class SignupScreen extends StatelessWidget {
                             onChanged: (String? newValue) {
                               _selectedCountryCode = newValue!;
                             },
-                            items: _countryCodes.map<DropdownMenuItem<String>>((Map<String, String> country) {
+                            items: _countryCodes.map<DropdownMenuItem<String>>(
+                                (Map<String, String> country) {
                               return DropdownMenuItem<String>(
                                 value: country['code'],
                                 child: Row(
@@ -171,6 +182,9 @@ class SignupScreen extends StatelessWidget {
                             ),
                           ),
                           validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Por favor ingrese su teléfono';
+                            }
                             return null;
                           },
                         ),
@@ -179,7 +193,36 @@ class SignupScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 35),
                   ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () async {
+                      if (_formKey.currentState!.validate()) {
+                        try {
+                          await AuthService().signUp(
+                            _nombreUsuarioController.text,
+                            _emailController.text,
+                            _nombreController.text,
+                            _apellidosController.text,
+                            _passwordController.text,
+                            _selectedCountryCode + _telefonoController.text,
+                          );
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                  'Registro exitoso. Por favor, inicia sesión.'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                          // Redirigir al login
+                          Navigator.pushReplacementNamed(context, '/login');
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Error al registrar: $e'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      }
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Color(0xff1ABC9C),
                     ),
