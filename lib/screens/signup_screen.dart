@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:gym_app/screens/login_screen.dart';
 import 'package:gym_app/utils/validators.dart';
 import 'package:gym_app/services/auth_service.dart';
+import 'package:gym_app/models/Usuario.dart';
 
 class SignupScreen extends StatefulWidget {
   @override
@@ -23,7 +24,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final List<Map<String, String>> _countryCodes = [
     {'code': '+34', 'name': 'España', 'flag': '🇪🇸'},
     {'code': '+1', 'name': 'EE.UU.', 'flag': '🇺🇸'},
-    // Más países aquí
+    {'code': '+31', 'name':'Paises Bajos', 'flag':'🇳🇱'}
   ];
 
   @override
@@ -196,13 +197,21 @@ class _SignupScreenState extends State<SignupScreen> {
                     onPressed: () async {
                       if (_formKey.currentState!.validate()) {
                         try {
+                          Usuario nuevoUsuario = Usuario(
+                            nombre: _nombreController.text,
+                            apellidos: _apellidosController.text,
+                            telefono: _selectedCountryCode + _telefonoController.text,
+                            correo: _emailController.text,
+                            nombreUsuario: _nombreUsuarioController.text
+                          );
+
                           await AuthService().signUp(
-                            _nombreUsuarioController.text,
-                            _emailController.text,
-                            _nombreController.text,
-                            _apellidosController.text,
+                            nuevoUsuario.nombreUsuario,
+                            nuevoUsuario.correo,
+                            nuevoUsuario.nombre,
+                            nuevoUsuario.apellidos,
                             _passwordController.text,
-                            _selectedCountryCode + _telefonoController.text,
+                            nuevoUsuario.telefono,
                           );
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(

@@ -13,7 +13,7 @@ class UserService {
 
       final response = await supabase
           .from('usuario')
-          .select('nombre, nombre_usuario, correo')
+          .select('nombre, apellidos, telefono, correo, medidas, nombre_usuario, nombre_usuario_foro, foto_usuario')
           .eq('pk_usuario', user.id)
           .single();
 

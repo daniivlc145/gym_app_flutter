@@ -167,7 +167,7 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         Scaffold(
           appBar: AppBar(
-            title: Text('Gym App'),
+            title: Text(''),
             actions: [
               IconButton(
                 icon: Icon(Icons.menu),
@@ -206,7 +206,7 @@ class _HomeScreenState extends State<HomeScreen> {
           BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
             child: Container(
-              color: Colors.black,
+              color: Colors.black.withOpacity(0.1),
             ),
           ),
       ],
