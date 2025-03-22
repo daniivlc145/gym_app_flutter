@@ -43,7 +43,8 @@ class LoginScreen extends StatelessWidget {
                         prefixIcon: Icon(Icons.email),
                         border: OutlineInputBorder(
                             borderRadius:
-                                BorderRadius.all(Radius.circular(50))),
+                                BorderRadius.all(Radius.circular(50))
+                        ),
                         labelText: 'Correo Electrónico',
                       ),
                       validator: (value) =>

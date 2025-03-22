@@ -31,7 +31,11 @@ class MyApp extends StatelessWidget {
         title: 'Gym App',
         theme: ThemeData(
           useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(seedColor: Color(0xFF1ABC9C)),
+          colorScheme: ColorScheme.fromSeed(seedColor: Color(0xFFECF0F1)),
+          scaffoldBackgroundColor: Color(0xFFECF0F1),
+          appBarTheme: AppBarTheme(
+            backgroundColor: Color(0xFFECF0F1)
+          )
         ),
         home: LoginScreen(),
       ),

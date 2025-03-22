@@ -100,4 +100,13 @@ class AuthService {
       throw Exception('Error durante el inicio de sesión');
     }
   }
+
+  Future<void> signOut() async {
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {
+      print('Log out error: $e');
+      throw Exception('Error al cerrar sesión');
+    }
+  }
 }
