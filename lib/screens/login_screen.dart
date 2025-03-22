@@ -4,6 +4,7 @@ import 'package:gym_app/screens/forgot_password_screen.dart';
 import 'package:gym_app/screens/signup_screen.dart';
 import 'package:gym_app/utils/validators.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:gym_app/services/auth_service.dart';
 
 class LoginScreen extends StatelessWidget {
   final _formKey = GlobalKey<FormState>();
@@ -42,10 +43,11 @@ class LoginScreen extends StatelessWidget {
                         prefixIcon: Icon(Icons.email),
                         border: OutlineInputBorder(
                             borderRadius:
-                            BorderRadius.all(Radius.circular(50))),
+                                BorderRadius.all(Radius.circular(50))),
                         labelText: 'Correo Electrónico',
                       ),
-                      validator: (value) => Validators.validateEmail(value ?? ''),
+                      validator: (value) =>
+                          Validators.validateEmail(value ?? ''),
                     ),
                   ),
                   const SizedBox(height: 25),
@@ -57,16 +59,46 @@ class LoginScreen extends StatelessWidget {
                         prefixIcon: Icon(Icons.lock),
                         border: OutlineInputBorder(
                             borderRadius:
-                            BorderRadius.all(Radius.circular(50))),
+                                BorderRadius.all(Radius.circular(50))),
                         labelText: 'Contraseña',
                       ),
                       obscureText: true,
-                      validator: (value) => Validators.validatePassword(value),
+                      validator: (value) =>
+                          Validators.validatePassword(value ?? ''),
                     ),
                   ),
                   const SizedBox(height: 25),
                   ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () async {
+                      if (_formKey.currentState!.validate()) {
+                        try {
+                          await AuthService().logIn(
+                            _emailController.text,
+                            _passwordController.text,
+                          );
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Inicio de sesión exitoso'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                          Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute(
+                                builder: (context) => HomeScreen()),
+                            (Route<dynamic> route) =>
+                                false, // Remove all previous routes
+                          );
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(e.toString()),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      }
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Color(0xff1ABC9C),
                     ),
@@ -83,16 +115,16 @@ class LoginScreen extends StatelessWidget {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => ForgotPassword()),
+                        MaterialPageRoute(
+                            builder: (context) => ForgotPassword()),
                       );
                     },
                     child: Text(
                       '¿Has olvidado tu contraseña?',
                       style: TextStyle(
-                        color: Color(0xff38434E),
-                        decoration: TextDecoration.underline,
-                        fontSize: 16
-                      ),
+                          color: Color(0xff38434E),
+                          decoration: TextDecoration.underline,
+                          fontSize: 16),
                     ),
                   ),
                   const SizedBox(height: 25),
@@ -100,9 +132,7 @@ class LoginScreen extends StatelessWidget {
                     width: 180,
                     height: 60,
                     child: SignInWithAppleButton(
-                      onPressed: () {
-
-                      },
+                      onPressed: () {},
                     ),
                   ),
                   const SizedBox(height: 35),

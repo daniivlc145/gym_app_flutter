@@ -3,10 +3,15 @@ import 'package:gym_app/screens/login_screen.dart';
 import 'package:gym_app/utils/validators.dart';
 import 'package:gym_app/services/auth_service.dart';
 
-class SignupScreen extends StatelessWidget {
+class SignupScreen extends StatefulWidget {
+  @override
+  _SignupScreenState createState() => _SignupScreenState();
+}
+
+class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nombreUsuarioController =
-      TextEditingController();
+  TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _nombreController = TextEditingController();
   final TextEditingController _apellidosController = TextEditingController();
@@ -18,7 +23,7 @@ class SignupScreen extends StatelessWidget {
   final List<Map<String, String>> _countryCodes = [
     {'code': '+34', 'name': 'España', 'flag': '🇪🇸'},
     {'code': '+1', 'name': 'EE.UU.', 'flag': '🇺🇸'},
-    // Añade más países aquí
+    // Más países aquí
   ];
 
   @override
@@ -31,14 +36,6 @@ class SignupScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            /*Text(
-              'REGISTRO',
-              style: TextStyle(
-                color: Color(0xff38434E),
-                fontSize: 30,
-                fontWeight: FontWeight.bold,
-              ),
-            ),*/
             SizedBox(height: 40),
             Form(
               key: _formKey,
@@ -133,7 +130,8 @@ class SignupScreen extends StatelessWidget {
                         labelText: 'Contraseña',
                       ),
                       obscureText: true,
-                      validator: (value) => Validators.validatePassword(value),
+                      validator: (value) =>
+                          Validators.validatePassword(value ?? ''),
                     ),
                   ),
                   const SizedBox(height: 25),
@@ -150,21 +148,23 @@ class SignupScreen extends StatelessWidget {
                           child: DropdownButton<String>(
                             value: _selectedCountryCode,
                             onChanged: (String? newValue) {
-                              _selectedCountryCode = newValue!;
+                              setState(() {
+                                _selectedCountryCode = newValue!;
+                              });
                             },
                             items: _countryCodes.map<DropdownMenuItem<String>>(
-                                (Map<String, String> country) {
-                              return DropdownMenuItem<String>(
-                                value: country['code'],
-                                child: Row(
-                                  children: [
-                                    Text(country['flag']!),
-                                    SizedBox(width: 8),
-                                    Text(country['code']!),
-                                  ],
-                                ),
-                              );
-                            }).toList(),
+                                    (Map<String, String> country) {
+                                  return DropdownMenuItem<String>(
+                                    value: country['code'],
+                                    child: Row(
+                                      children: [
+                                        Text(country['flag']!),
+                                        SizedBox(width: 8),
+                                        Text(country['code']!),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
                           ),
                         ),
                       ),
@@ -206,17 +206,20 @@ class SignupScreen extends StatelessWidget {
                           );
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(
-                                  'Registro exitoso. Por favor, inicia sesión.'),
+                              content: Text('Registro exitoso'),
                               backgroundColor: Colors.green,
                             ),
                           );
-                          // Redirigir al login
-                          Navigator.pushReplacementNamed(context, '/login');
+                          Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute(
+                                builder: (context) => LoginScreen()),
+                                (Route<dynamic> route) =>
+                            false,
+                          );
                         } catch (e) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Error al registrar: $e'),
+                              content: Text(e.toString()),
                               backgroundColor: Colors.red,
                             ),
                           );
@@ -242,5 +245,16 @@ class SignupScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _nombreUsuarioController.dispose();
+    _emailController.dispose();
+    _nombreController.dispose();
+    _apellidosController.dispose();
+    _passwordController.dispose();
+    _telefonoController.dispose();
+    super.dispose();
   }
 }

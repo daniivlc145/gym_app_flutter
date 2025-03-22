@@ -6,17 +6,47 @@ class AuthService {
 
   Future<void> signUp(String nombreUsuario, String email, String nombre,
       String apellidos, String password, String telefono) async {
-    final AuthResponse res =
-        await supabase.auth.signUp(email: email, password: password, data: {
-      'nombre': nombre,
-      'apellidos': apellidos,
-      'nombre_usuario': nombreUsuario,
-      'telefono': telefono,
-    });
-    final Session? session = res.session;
-    final User? user = res.user;
-    if (session == null || user == null) {
-      throw Exception('Error al registrar el usuario');
+    try {
+      bool emailExists = await emailExistsInDatabase(email);
+      bool usernameExists = await usernameExistsInDatabase(nombreUsuario);
+
+      if (emailExists) {
+        throw Exception('Este correo electrónico ya está registrado');
+      }
+
+      if (usernameExists) {
+        throw Exception('Este nombre de usuario ya está en uso');
+      }
+
+      final AuthResponse res =
+          await supabase.auth.signUp(email: email, password: password);
+
+      final User? user = res.user;
+
+      if (user == null) {
+        throw Exception('Error al registrar el usuario');
+      }
+
+      final insertResponse = await supabase.from('usuario').insert({
+        'pk_usuario': user.id,
+        'correo': email,
+        'nombre': nombre,
+        'apellidos': apellidos,
+        'nombre_usuario': nombreUsuario,
+        'telefono': telefono
+      });
+
+      return insertResponse;
+    } on PostgrestException catch (postgrestError) {
+      print('Postgres Error: ${postgrestError.message}');
+      throw Exception(
+          'Error al insertar en la base de datos: ${postgrestError.message}');
+    } on AuthException catch (authError) {
+      print('Authentication Error: ${authError.message}');
+      throw Exception(authError.message);
+    } catch (e) {
+      print('Unexpected Signup Error: $e');
+      throw Exception('Error durante el registro: $e');
     }
   }
 
@@ -47,6 +77,27 @@ class AuthService {
     } catch (e) {
       print('Error al comprobar nombre de usuario en base de datos: $e');
       throw Exception('Este nombre de usuario ya existe en la base de datos');
+    }
+  }
+
+  Future<void> logIn(String correo, String password) async {
+    try {
+      final AuthResponse res = await supabase.auth.signInWithPassword(
+        email: correo,
+        password: password,
+      );
+      final Session? session = res.session;
+      final User? user = res.user;
+
+      if (session == null || user == null) {
+        throw Exception('Error de autenticación');
+      }
+    } on AuthException catch (e) {
+      print('Authentication Error: ${e.message}');
+      throw Exception(e.message);
+    } catch (e) {
+      print('Login Error: $e');
+      throw Exception('Error durante el inicio de sesión');
     }
   }
 }
