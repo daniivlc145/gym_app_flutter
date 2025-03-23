@@ -3,6 +3,10 @@ import 'package:gym_app/screens/login_screen.dart';
 import 'package:gym_app/services/auth_service.dart';
 import 'package:gym_app/services/user_service.dart';
 import 'package:gym_app/models/usuario.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import 'package:permission_handler/permission_handler.dart';
+
 
 class SettingsScreen extends StatefulWidget {
   @override
@@ -15,6 +19,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final TextEditingController _apellidosController = TextEditingController();
   final TextEditingController _telefonoController = TextEditingController();
   final TextEditingController _correoController = TextEditingController();
+
+  File? _imageFile;
 
   final UserService _userService = UserService();
   Future<Usuario>? _userDataFuture;
@@ -54,6 +60,54 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error al cerrar sesión: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future <void> _cambiarImagen() async {
+    try{
+      if (Platform.isAndroid) {
+        await requestPermission();
+      }
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+      if (image != null) {
+        setState(() {
+          _imageFile = File(image.path);
+        });
+      }
+
+    }catch(e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al escoger imagen: $e')),
+      );
+    }
+  }
+
+  Future<void> requestPermission() async {
+    if (Platform.isAndroid) {
+      if (await Permission.photos.isDenied ||
+          await Permission.photos.isPermanentlyDenied) {
+        await Permission.photos.request();
+      }
+    }
+  }
+
+  void _guardarCambiosUsuario(String nombre, String apellidos, String telefono) async {
+    try {
+      await _userService.updateUserDataFromSettings(nombre, apellidos, telefono, _imageFile);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Datos actualizados correctamente'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al actualizar los datos: $e'),
           backgroundColor: Colors.red,
         ),
       );
@@ -101,8 +155,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ? NetworkImage(usuario.fotoUsuario!)
                             : AssetImage('assets/usuario.png') as ImageProvider,
                       ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: GestureDetector(
+                          onTap: () {
+                            _cambiarImagen();
+                          },
+                          child: CircleAvatar(
+                            radius: 16,
+                            backgroundColor: Colors.white,
+                            child: Icon(
+                              Icons.edit,
+                              color: Colors.black,
+                              size: 18,
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
+
                   const SizedBox(height: 25),
                   Form(
                     key: _formKey,
@@ -170,6 +243,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ],
                     ),
                   ),
+                  ElevatedButton(
+                    onPressed: () => _guardarCambiosUsuario(_nombreController.text, _apellidosController.text, _telefonoController.text),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xff1ABC9C),
+                    ),
+                    child: const Text(
+                      'GUARDAR CAMBIOS',
+                      style: TextStyle(
+                        color: Color(0xffECF0F1),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 25),
                   ElevatedButton(
                     onPressed: () => _cambiarContrasena(context),
                     child: Text(

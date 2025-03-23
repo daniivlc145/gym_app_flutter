@@ -16,6 +16,8 @@ dependencies:
   supabase_flutter: ^2.0.0
   sign_in_with_apple: ^6.1.4
   shared_preferences: ^2.0.15
+  image_picker: 1.1.2
+  permission_handler: ^10.4.3
 
 dev_dependencies:
   flutter_test:
