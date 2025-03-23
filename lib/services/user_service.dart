@@ -48,13 +48,15 @@ class UserService {
         updateData['foto_usuario'] = rutaImagenSubida;
       }
 
-      final updateResponse = await supabase
+      final response = await supabase
           .from('usuario')
           .update(updateData)
-          .eq('pk_usuario', user.id);
+          .eq('pk_usuario', user.id)
+          .select()
+          .single();
 
-      if (updateResponse.error != null) {
-        throw Exception('Error al actualizar los datos del usuario: ${updateResponse.error!.message}');
+      if (response == null || response.isEmpty) {
+        throw Exception('Error al actualizar los datos del usuario');
       }
     } on PostgrestException catch (postgrestError) {
       print('Postgres Error: ${postgrestError.message}');
@@ -67,18 +69,23 @@ class UserService {
 
   Future<String> subirImagenUsuario(File imagen) async {
     try {
-      final fileName = DateTime.now().millisecondsSinceEpoch.toString();
-      final path = '$fileName';
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final path = 'private/$fileName';
 
       await Supabase.instance.client.storage
           .from('fotousuario')
-          .upload(path, imagen!);
+          .upload(path, imagen, fileOptions: FileOptions(upsert: true));
 
-      final publicUrl = supabase.storage.from('fotousuario').getPublicUrl(path);
-      return publicUrl;
+      final signedUrl = await supabase.storage
+          .from('fotousuario')
+          .createSignedUrl(path, 31536000);
+
+      print("URL firmada generada: $signedUrl");
+      return signedUrl;
     } catch (e) {
       print('Error al subir la imagen: $e');
       throw Exception('Error al subir la imagen');
     }
   }
+
 }
