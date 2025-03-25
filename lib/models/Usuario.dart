@@ -7,6 +7,7 @@ class Usuario {
   final String nombreUsuario;
   final String? nombreUsuarioForo;
   final String? fotoUsuario;
+  final String? descripcion;
 
   Usuario({
     required this.nombre,
@@ -17,6 +18,7 @@ class Usuario {
     required this.nombreUsuario,
     this.nombreUsuarioForo,
     this.fotoUsuario,
+    this.descripcion
   });
 
   factory Usuario.fromMap(Map<String, dynamic> map) {
@@ -31,6 +33,7 @@ class Usuario {
       fotoUsuario: (map['foto_usuario'] != null && map['foto_usuario'].toString().isNotEmpty)
           ? map['foto_usuario'].toString().replaceAll("'", "")
           : 'https://tu-servidor.com/avatar_default.png',
+      descripcion: map['descripcion'] ?? ''
     );
   }
 

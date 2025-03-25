@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gym_app/themes/app_theme.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/login_screen.dart';
@@ -26,21 +27,25 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (context) => MyAppState(),
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'Gym App',
-        theme: ThemeData(
-          useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(seedColor: Color(0xFFECF0F1)),
-          scaffoldBackgroundColor: Color(0xFFECF0F1),
-          appBarTheme: AppBarTheme(
-            backgroundColor: Color(0xFFECF0F1)
-          )
-        ),
-        home: LoginScreen(),
+      child: Consumer<MyAppState>(
+        builder: (context, appState, child) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            title: 'Gym App',
+            theme: appState.isDarkMode ? AppTheme.darkTheme : AppTheme.lightTheme,
+            home: LoginScreen(),
+          );
+        },
       ),
     );
   }
 }
 
-class MyAppState extends ChangeNotifier {}
+class MyAppState extends ChangeNotifier {
+  bool isDarkMode = false;
+
+  void toggleTheme() {
+    isDarkMode = !isDarkMode;
+    notifyListeners();
+  }
+}

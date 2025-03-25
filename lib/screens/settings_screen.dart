@@ -45,7 +45,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<Usuario> _getUserData() async {
     final userDataMap = await _userService.getCurrentUserData();
-    return Usuario.fromMap(userDataMap);
+    final usuario = Usuario.fromMap(userDataMap);
+
+    if (usuario.fotoUsuario != null && usuario.fotoUsuario!.isNotEmpty) {
+      await precacheImage(NetworkImage(usuario.fotoUsuario!), context);
+    }
+
+    return usuario;
   }
 
   void _logout() async {
