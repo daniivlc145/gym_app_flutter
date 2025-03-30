@@ -32,7 +32,7 @@ class Usuario {
       nombreUsuarioForo: map['nombre_usuario_foro'],
       fotoUsuario: (map['foto_usuario'] != null && map['foto_usuario'].toString().isNotEmpty)
           ? map['foto_usuario'].toString().replaceAll("'", "")
-          : 'https://tu-servidor.com/avatar_default.png',
+          : '',
       descripcion: map['descripcion'] ?? ''
     );
   }

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:gym_app/screens/perfil_amigo_sreen.dart';
+import 'package:gym_app/screens/friend_profile_screen.dart';
 import 'package:gym_app/models/Usuario.dart';
 import 'package:gym_app/services/user_service.dart';
 import 'package:gym_app/screens/add_friends_screen.dart';
+import 'package:gym_app/services/gimnasio_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   @override
@@ -11,12 +12,19 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final UserService _userService = UserService();
+  final GimnasioService _gimnasioService = GimnasioService();
   Future<Usuario>? _userDataFuture;
+  Future<List<Map<String, dynamic>>>? _gimnasiosFuture;
+  List<dynamic> _amigos = [];
+  List<dynamic> _solicitudesRecibidas = [];
+  List<dynamic> _solicitudesEnviadas = [];
+
 
   @override
   void initState() {
     super.initState();
     _userDataFuture = _getUserData();
+    _gimnasiosFuture = _getGimnasiosDeUsuarioActivo();
   }
 
   Future<Usuario> _getUserData() async {
@@ -28,9 +36,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return usuario;
   }
 
+
+
   void _showListaAmigos() async {
     final List<String> opciones = ['Amigos', 'Solicit. Recibidas', 'Solicit. Enviadas'];
     String opcionSeleccionada = 'Amigos';
+
+    _amigos = await _userService.getAmigos();
+    _solicitudesRecibidas = await _userService.getSolicitudesRecibidas();
+    _solicitudesEnviadas = await _userService.getSolicitudesEnviadas();
+
+    setState(() {});
 
     try {
       final amigos = await _userService.getAmigos();
@@ -152,7 +168,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               leading: CircleAvatar(backgroundImage: solicitud['foto_usuario'] != null ? NetworkImage(solicitud['foto_usuario']) : AssetImage('assets/usuario.png') as ImageProvider),
               title: Text(solicitud['nombre_usuario']),
               subtitle: Text('${solicitud['nombre']} ${solicitud['apellidos']}'),
-              trailing: IconButton(icon: Icon(Icons.cancel, color: Colors.red), onPressed: () => _cancelarSolicitudAmistad(solicitud['pk_usuario'])),
+              trailing: IconButton(icon: Icon(Icons.cancel, color: Colors.red), onPressed: () => _cancelarSolicitudAmistad(solicitud['pk_usuario'], setState)),
             );
           },
         );
@@ -180,13 +196,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  void _cancelarSolicitudAmistad(String usuarioId) async {
+  void _cancelarSolicitudAmistad(String usuarioId, Function setStateModal) async {
     try {
       await _userService.eliminarSolicitudEnviada(usuarioId);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Solicitud cancelada'), backgroundColor: Colors.green));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Solicitud cancelada')));
+
+      Navigator.of(context).pop();
+
       _showListaAmigos();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
 
@@ -216,6 +235,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _editarPerfil(){}
+
+  Future<List<Map<String, dynamic>>> _getGimnasiosDeUsuarioActivo() async {
+    return await _gimnasioService.getGimnasiosDeUsuarioActivo();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -259,11 +282,49 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 SizedBox(height: 20),
                 Row(children: [Padding(padding: EdgeInsets.only(left: 30), child: Text(usuario.descripcion ?? '', style: TextStyle(fontSize: 16), textAlign: TextAlign.left))]),
+                _buildPanelGimnasios(),
+
               ],
             ),
           );
         },
       ),
+    );
+  }
+
+
+  Widget _buildPanelGimnasios() {
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: _gimnasiosFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) return Center(child: CircularProgressIndicator());
+        if (snapshot.hasError) return Center(child: Text('Error: ${snapshot.error}'));
+        if (!snapshot.hasData || snapshot.data!.isEmpty) return Center(child: Text('No hay gimnasios disponibles.'));
+
+        final gimnasios = snapshot.data!;
+
+        return ExpansionPanelList(
+          expansionCallback: (int index, bool isExpanded) {
+            setState(() {
+              gimnasios[index]['isExpanded'] = !isExpanded;
+            });
+          },
+          children: gimnasios.map<ExpansionPanel>((gimnasio) {
+            return ExpansionPanel(
+              headerBuilder: (BuildContext context, bool isExpanded) {
+                return ListTile(
+                  title: Text(gimnasio['nombre']),
+                );
+              },
+              body: ListTile(
+                title: Text('Ciudad: ${gimnasio['ciudad']}'),
+                subtitle: Text('Código Postal: ${gimnasio['codigo_postal']}'),
+              ),
+              isExpanded: gimnasio['isExpanded'] ?? false,
+            );
+          }).toList(),
+        );
+      },
     );
   }
 }

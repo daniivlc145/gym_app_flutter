@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gym_app/services/user_service.dart';
-import 'package:gym_app/screens/perfil_amigo_sreen.dart';
+import 'package:gym_app/screens/friend_profile_screen.dart';
 
 class AddFriendScreen extends StatefulWidget {
   @override

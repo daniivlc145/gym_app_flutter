@@ -346,18 +346,23 @@ class UserService {
   }
 
   Future<bool> existeSolicitudAmistad(String otroUsuarioId) async {
-    final user = supabase.auth.currentUser;
-    if (user == null) throw Exception('No autenticado');
+    try{
+      final user = supabase.auth.currentUser;
+      if (user == null) throw Exception('No autenticado');
 
-    final userId = user.id;
+      final userId = user.id;
 
-    final existingRequest = await supabase
-        .from('solicitud_amistad')
-        .select()
-        .or('fk_usuario_origen.eq.$userId,fk_usuario_destino.eq.$otroUsuarioId,fk_usuario_origen.eq.$otroUsuarioId,fk_usuario_destino.eq.$userId')
-        .maybeSingle();
+      final existingRequest = await supabase
+          .from('solicitud_amistad')
+          .select()
+          .or('fk_usuario_origen.eq.$userId,fk_usuario_destino.eq.$otroUsuarioId,fk_usuario_origen.eq.$otroUsuarioId,fk_usuario_destino.eq.$userId')
+          .maybeSingle();
 
-    return existingRequest != null;
+      return existingRequest != null;
+    }catch(e){
+      throw e.toString();
+    }
+
   }
 
 
