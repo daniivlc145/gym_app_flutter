@@ -13,12 +13,10 @@ class GimnasioService {
           nombre, 
           ciudad, 
           codigo_postal, 
-          cadena_gimnasio(nombre, logo)
+          cadena_gimnasio(pk_cadena_gimnasio, nombre, logo)
         ''')
           .eq('pk_gimnasio', pkGimnasio)
           .single();
-
-
       return gimnasioDataResponse;
     } catch (e) {
       throw e.toString();

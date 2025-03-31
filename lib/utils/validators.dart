@@ -19,6 +19,20 @@ class Validators {
     return null;
   }
 
+  static String? validateDescripcion(String value) {
+    if (value.isEmpty) {
+      return 'La descripción no puede estar vacía';
+    }
+    return null;
+  }
+
+  static String? validateUsernameForo(String value) {
+    if (value.isEmpty) {
+      return 'El nombre de usuario en foros es obligatorio';
+    }
+    return null;
+  }
+
   static String? validatePassword(String value) {
     if (value.isEmpty) {
       return 'Por favor ingrese su contraseña';

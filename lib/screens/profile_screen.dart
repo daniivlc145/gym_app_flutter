@@ -4,6 +4,7 @@ import 'package:gym_app/models/Usuario.dart';
 import 'package:gym_app/services/user_service.dart';
 import 'package:gym_app/screens/add_friends_screen.dart';
 import 'package:gym_app/services/gimnasio_service.dart';
+import 'package:gym_app/screens/edit_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   @override
@@ -234,7 +235,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _editarPerfil(){}
+  void _editarPerfil() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => EditProfileScreen()),
+    );
+  }
 
   Future<List<Map<String, dynamic>>> _getGimnasiosDeUsuarioActivo() async {
     return await _gimnasioService.getGimnasiosDeUsuarioActivo();
@@ -269,9 +275,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         children: [
                           Row(
                             children: [
-                              Text(usuario.nombreUsuario, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                              Text(
+                                  usuario.nombreUsuario,
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18
+                                  )
+                              ),
                               SizedBox(width: 10),
-                              ElevatedButton(onPressed: _showListaAmigos, style: ElevatedButton.styleFrom(backgroundColor: Color(0xffECF0F1), shadowColor: Colors.transparent, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5))), child: Icon(Icons.people, color: Color(0xff38434E))),
+                              ElevatedButton(
+                                  onPressed: _showListaAmigos,
+                                  style: ElevatedButton.styleFrom(
+                                      backgroundColor: Color(0xffECF0F1),
+                                      shadowColor: Colors.transparent,
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(5)
+                                      )
+                                  ),
+                                  child: Icon(Icons.people, color: Color(0xff38434E))),
                             ],
                           ),
                           ElevatedButton(onPressed: _editarPerfil, style: ElevatedButton.styleFrom(backgroundColor: Color(0xffECF0F1), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5))), child: Text('Editar Perfil', style: TextStyle(color: Color(0xff38434E)))),
@@ -281,7 +302,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
                 SizedBox(height: 20),
-                Row(children: [Padding(padding: EdgeInsets.only(left: 30), child: Text(usuario.descripcion ?? '', style: TextStyle(fontSize: 16), textAlign: TextAlign.left))]),
+                Row(
+                    children: [
+                      Padding(
+                          padding: EdgeInsets.only(left: 30),
+                          child: Text(
+                              usuario.descripcion ?? '',
+                              style: TextStyle(fontSize: 16),
+                              textAlign: TextAlign.left
+                          )
+                      )
+                    ]
+                ),
+                SizedBox(height: 20,),
                 _buildPanelGimnasios(),
 
               ],
