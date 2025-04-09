@@ -18,15 +18,26 @@ class _EditProfileScreenState extends State<EditProfileScreen>{
   final UserService _userService = UserService();
   final GimnasioService _gimnasioService = GimnasioService();
   Future<Usuario>? _userDataFuture;
-  Future<List<Map<String, dynamic>>>? _gimnasiosFuture;
+  Future<List<Map<String, dynamic>>>? _cadenasGymFuture;
+  Future<List<Map<String, dynamic>>>? _gimnasiosUsuarioFuture;
 
-  List<bool> _isExpanded = [];
 
   @override
   void initState() {
     super.initState();
     _userDataFuture = _getUserData();
-    _gimnasiosFuture = _getGimnasiosDeUsuario();
+    _cadenasGymFuture = _getListaDeCadenasGym();
+    _gimnasiosUsuarioFuture = _getGimnasiosUsuario();
+  }
+
+
+
+  Future<List<Map<String, dynamic>>> _getListaDeCadenasGym() async {
+    return await _gimnasioService.getListaDeCadenasGym();
+  }
+
+  Future<List<Map<String, dynamic>>> _getGimnasiosUsuario() async {
+    return await _gimnasioService.getGimnasiosDeUsuarioActivo();
   }
 
   Future<Usuario> _getUserData() async {
@@ -40,10 +51,92 @@ class _EditProfileScreenState extends State<EditProfileScreen>{
     return usuario;
   }
 
-  Future<List<Map<String, dynamic>>> _getGimnasiosDeUsuario() async {
-    final gimnasios = await _gimnasioService.getGimnasiosDeUsuarioActivo();
-    _isExpanded = List<bool>.filled(gimnasios.length, false);
-    return gimnasios;
+  void _showAdministrarGimnasios() async {
+    try {
+      final cadenas = await _cadenasGymFuture;
+      await showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+        builder: (context) => StatefulBuilder(
+          builder: (context, setState) => GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => Navigator.of(context).pop(),
+            child: DraggableScrollableSheet(
+              initialChildSize: 0.8,
+              minChildSize: 0.4,
+              maxChildSize: 0.9,
+              builder: (_, controller) => GestureDetector(
+                onTap: () {},
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Color(0xFFECF0F1),
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                  ),
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Text(
+                          "Mis Gimnasios",
+                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          // Acción para añadir un nuevo gimnasio
+                        },
+                        child: Text("Añadir"),
+                      ),
+                      SizedBox(height: 10),
+                      Expanded(
+                        child: GridView.builder(
+                          padding: EdgeInsets.all(16.0),
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 10.0,
+                            mainAxisSpacing: 10.0,
+                            childAspectRatio: 3 / 2,
+                          ),
+                          itemCount: cadenas?.length ?? 0,
+                          itemBuilder: (context, index) {
+                            final cadena = cadenas![index];
+                            return Card(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Image.network(
+                                    cadena['logo'],
+                                    height: 50,
+                                    width: 50,
+                                  ),
+                                  SizedBox(height: 10),
+                                  Text(
+                                    cadena['nombre'],
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }catch(e){
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+    }
   }
 
   @override
@@ -121,6 +214,25 @@ class _EditProfileScreenState extends State<EditProfileScreen>{
                               ),
                             ),
                           ),
+                          SizedBox(height: 25),
+                          ElevatedButton(
+                              onPressed: _showAdministrarGimnasios,
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: Color(0xFF1ABC9C),
+                                  side: BorderSide(color: Color(0xFF1ABC9C), width: 2),
+                                  elevation: 0,
+                                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.fitness_center),
+                                  SizedBox(width: 15),
+                                  Text("Mis Gimnasios")
+                                ],
+                              ),
+                          )
                         ],
                       )
                   ),

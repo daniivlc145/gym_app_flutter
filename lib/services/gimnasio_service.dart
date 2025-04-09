@@ -105,7 +105,7 @@ class GimnasioService {
     try {
       final response = await supabase
           .from('cadena_gimnasio')
-          .select('pk_gimnasio, nombre, logo');
+          .select('pk_cadena_gimnasio, nombre, logo');
 
       return response;
 
