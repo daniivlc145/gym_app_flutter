@@ -23,18 +23,25 @@ class GimnasioService {
     }
   }
 
-  Future <List<Map<String, dynamic>>> getGimnasiosDeUsuarioActivo() async{
+  Future<List<Map<String, dynamic>>> getGimnasiosDeUsuarioActivo() async {
     try {
       final user = supabase.auth.currentUser;
       if (user == null) {
         throw Exception('No hay usuario autenticado');
       }
-      final userId = user.id;
-      return await getGimnasiosDeUsuario(userId);
-    }catch(e){
+
+      // Obtener los gimnasios del usuario a través de getGimnasiosDeUsuario
+      final gimnasios = await getGimnasiosDeUsuario(user.id);
+
+      return gimnasios;
+    } catch (e) {
+      print('Error en getGimnasiosDeUsuarioActivo: $e');
       throw e.toString();
     }
   }
+
+
+
 
   Future<List<Map<String, dynamic>>> getGimnasiosDeUsuario(String idUsuario) async{
     try {
@@ -55,6 +62,10 @@ class GimnasioService {
           gimnasioIds.map((gimnasioId) => getInfoGimnasio(gimnasioId))
       );
 
+      for (int i = 0; i < gimnasiosInfo.length; i++) {
+        gimnasiosInfo[i]['pk_gimnasio'] = gimnasioIds[i];
+      }
+
       return gimnasiosInfo;
     }catch(e){
       throw e.toString();
@@ -68,14 +79,15 @@ class GimnasioService {
         throw Exception('No hay usuario autenticado');
       }
 
-      final response = await supabase
+      await supabase
           .from('usuario_gimnasio')
-          .insert({'fk_usuario': user.id, 'fk_gimnasio': gymId});
+          .insert({
+        'fk_usuario': user.id,
+        'fk_gimnasio': gymId
+      });
 
-      if (response.error != null) {
-        throw Exception('Error al agregar el gimnasio: ${response.error!.message}');
-      }
     } catch (e) {
+      print('Error detallado: $e');
       throw Exception('Error al agregar el gimnasio: $e');
     }
   }
@@ -161,6 +173,41 @@ class GimnasioService {
 
     }catch(e){
       throw e.toString();
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> buscarGimnasios({
+    String? nombre,
+    String? codigoPostal,
+    List<String>? cadenas,
+  }) async {
+    try {
+      var query = supabase.from('gimnasio').select('''
+      pk_gimnasio,
+      nombre,
+      ciudad,
+      codigo_postal,
+      cadena_gimnasio(pk_cadena_gimnasio, nombre, logo)
+    ''');
+
+      if (nombre != null && nombre.isNotEmpty) {
+        query = query.ilike('nombre', '%$nombre%');
+      }
+
+      if (codigoPostal != null && codigoPostal.isNotEmpty) {
+        query = query.eq('codigo_postal', codigoPostal);
+      }
+
+      if (cadenas != null && cadenas.isNotEmpty) {
+        query = query.inFilter('fk_cadena_gimnasio', cadenas);
+      }
+
+      final response = await query;
+
+
+      return response;
+    } catch (e) {
+      throw Exception('Error al buscar gimnasios: $e');
     }
   }
 

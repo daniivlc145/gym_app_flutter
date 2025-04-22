@@ -12,9 +12,18 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
   final UserService _userService = UserService();
   List _resultados = [];
   bool _isSearching = false;
+  final FocusNode _focusNode = FocusNode();
 
-  void _buscarUsuarios(String query) async {
-    if (query.isEmpty) {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      FocusScope.of(context).requestFocus(_focusNode);
+    });
+  }
+
+  void _buscarUsuarios(String nombre) async {
+    if (nombre.isEmpty) {
       setState(() {
         _resultados = [];
         _isSearching = false;
@@ -25,7 +34,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
     setState(() => _isSearching = true);
 
     try {
-      final resultados = await _userService.buscarUsuarios(query);
+      final resultados = await _userService.buscarUsuarios(nombre);
       setState(() {
         _resultados = resultados;
         _isSearching = false;
@@ -72,6 +81,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
             padding: const EdgeInsets.all(16.0),
             child: TextField(
               controller: _searchController,
+              focusNode: _focusNode,
               decoration: InputDecoration(
                 hintText: 'Buscar',
                 prefixIcon: Icon(Icons.search),
@@ -119,6 +129,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 }

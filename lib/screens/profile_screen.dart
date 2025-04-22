@@ -20,7 +20,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   List<dynamic> _solicitudesRecibidas = [];
   List<dynamic> _solicitudesEnviadas = [];
 
-
   @override
   void initState() {
     super.initState();
@@ -36,8 +35,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
     return usuario;
   }
-
-
 
   void _showListaAmigos() async {
     final List<String> opciones = ['Amigos', 'Solicit. Recibidas', 'Solicit. Enviadas'];
@@ -263,11 +260,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
+                // Información del perfil (avatar, nombre, y bio)
                 Row(
                   children: [
                     Padding(
                       padding: EdgeInsets.only(left: 30),
-                      child: CircleAvatar(radius: 50, backgroundImage: usuario.fotoUsuario != null && usuario.fotoUsuario!.isNotEmpty ? NetworkImage(usuario.fotoUsuario!) : AssetImage('assets/usuario.png') as ImageProvider),
+                      child: CircleAvatar(
+                          radius: 50,
+                          backgroundImage: usuario.fotoUsuario != null && usuario.fotoUsuario!.isNotEmpty
+                              ? NetworkImage(usuario.fotoUsuario!)
+                              : AssetImage('assets/usuario.png') as ImageProvider
+                      ),
                     ),
                     Padding(
                       padding: EdgeInsets.only(left: 30),
@@ -295,7 +298,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   child: Icon(Icons.people, color: Color(0xff38434E))),
                             ],
                           ),
-                          ElevatedButton(onPressed: _editarPerfil, style: ElevatedButton.styleFrom(backgroundColor: Color(0xffECF0F1), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5))), child: Text('Editar Perfil', style: TextStyle(color: Color(0xff38434E)))),
+                          ElevatedButton(
+                              onPressed: _editarPerfil,
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor: Color(0xffECF0F1),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(5)
+                                  )
+                              ),
+                              child: Text('Editar Perfil', style: TextStyle(color: Color(0xff38434E)))),
                         ],
                       ),
                     ),
@@ -314,9 +325,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       )
                     ]
                 ),
-                SizedBox(height: 20,),
+                SizedBox(height: 20),
                 _buildPanelGimnasios(),
-
               ],
             ),
           );
@@ -325,39 +335,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-
   Widget _buildPanelGimnasios() {
     return FutureBuilder<List<Map<String, dynamic>>>(
       future: _gimnasiosFuture,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) return Center(child: CircularProgressIndicator());
-        if (snapshot.hasError) return Center(child: Text('Error: ${snapshot.error}'));
-        if (!snapshot.hasData || snapshot.data!.isEmpty) return Center(child: Text('No hay gimnasios disponibles.'));
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        }
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return Center(child: Text('No hay gimnasios disponibles.'));
+        }
 
         final gimnasios = snapshot.data!;
 
-        return ExpansionPanelList(
-          expansionCallback: (int index, bool isExpanded) {
-            setState(() {
-              gimnasios[index]['isExpanded'] = !isExpanded;
-            });
-          },
-          children: gimnasios.map<ExpansionPanel>((gimnasio) {
-            return ExpansionPanel(
-              headerBuilder: (BuildContext context, bool isExpanded) {
-                return ListTile(
-                  title: Text(gimnasio['nombre']),
-                );
-              },
-              body: ListTile(
-                title: Text('Ciudad: ${gimnasio['ciudad']}'),
-                subtitle: Text('Código Postal: ${gimnasio['codigo_postal']}'),
-              ),
-              isExpanded: gimnasio['isExpanded'] ?? false,
-            );
-          }).toList(),
+
+        return Container(
+          height: 300, // Ajusta la altura máxima aquí según sea necesario
+          child: ListView(
+            children: gimnasios.map<Widget>((gimnasio) {
+              return ListTile(
+                title: Text(gimnasio['nombre'] ?? 'Sin nombre'), // Si el nombre es null, mostrar 'Sin nombre'
+                subtitle: Text('Ciudad: ${gimnasio['ciudad'] ?? 'Desconocida'}'), // Si la ciudad es null, mostrar 'Desconocida'
+                trailing: Icon(Icons.location_on),
+              );
+            }).toList(),
+          ),
         );
       },
     );
   }
+
+
 }
