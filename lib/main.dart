@@ -31,7 +31,7 @@ class MyApp extends StatelessWidget {
         builder: (context, appState, child) {
           return MaterialApp(
             debugShowCheckedModeBanner: false,
-            title: 'Gym App',
+            title: 'Gymbly',
             theme: appState.isDarkMode ? AppTheme.darkTheme : AppTheme.lightTheme,
             home: LoginScreen(),
           );

@@ -67,6 +67,41 @@ class UserService {
     }
   }
 
+  Future<void> updateUserDataFromEditProfile(String nombreUsuario, String descripcion, String nombreUsuarioForo) async {
+    try {
+      final user = supabase.auth.currentUser;
+
+      if (user == null) {
+        throw Exception('Error al obtener usuario');
+      }
+
+
+      final updateData = {
+        'nombre_usuario': nombreUsuario,
+        'descripcion': descripcion,
+        'nombre_usuario_foro': nombreUsuarioForo,
+      };
+
+
+      final response = await supabase
+          .from('usuario')
+          .update(updateData)
+          .eq('pk_usuario', user.id)
+          .select()
+          .single();
+
+      if (response == null || response.isEmpty) {
+        throw Exception('Error al actualizar los datos del usuario');
+      }
+    } on PostgrestException catch (postgrestError) {
+      print('Postgres Error: ${postgrestError.message}');
+      throw Exception('Error al actualizar en la base de datos: ${postgrestError.message}');
+    } catch (e) {
+      print('Unexpected Update Error: $e');
+      throw Exception('Error durante la actualización: $e');
+    }
+  }
+
   Future<String> subirImagenUsuario(File imagen) async {
     try {
       final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';

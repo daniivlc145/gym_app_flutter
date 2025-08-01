@@ -4,6 +4,7 @@ import 'package:gym_app/screens/add_gimnasio_screen.dart';
 import 'package:gym_app/services/user_service.dart';
 import 'package:gym_app/utils/validators.dart';
 import 'package:gym_app/services/gimnasio_service.dart';
+import 'package:gym_app/models/Gimnasio.dart';
 
 class EditProfileScreen extends StatefulWidget {
   @override
@@ -21,6 +22,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   Future<Usuario>? _userDataFuture;
 
+  List<Gimnasio> _gimnasios = [];
+  bool _isLoading = false;
+
   @override
   void initState() {
     super.initState();
@@ -30,13 +34,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Future<Usuario> _getUserData() async {
     final userDataMap = await _userService.getCurrentUserData();
     final usuario = Usuario.fromMap(userDataMap);
-    if (usuario.fotoUsuario != null && usuario.fotoUsuario!.isNotEmpty) {
-      await precacheImage(NetworkImage(usuario.fotoUsuario!), context);
-    }
     return usuario;
   }
 
-  Future<List<Map<String, dynamic>>> _getGimnasiosUsuario() async {
+  Future<List<Gimnasio>> _getGimnasiosUsuario() async {
     try {
       final gimnasiosCompletos = await _gimnasioService.getGimnasiosDeUsuarioActivo();
       return gimnasiosCompletos;
@@ -47,8 +48,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   void _showAdministrarGimnasios() async {
-    List<Map<String, dynamic>> gimnasios = await _getGimnasiosUsuario();
-    String? selectedGimnasioId;
+    setState(() {
+      _isLoading = true;
+    });
+    _gimnasios = await _getGimnasiosUsuario();
+
+    Set<String> selectedGimnasios = {};
+    bool isDeleting = false;
+    bool gimnasiosModificados = false;
+
+    setState(() {
+      _isLoading = false;
+    });
 
     await showModalBottomSheet(
       context: context,
@@ -56,139 +67,230 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       backgroundColor: Colors.transparent,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) => StatefulBuilder(
-        builder: (context, setState) => GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () => Navigator.of(context).pop(),
-          child: DraggableScrollableSheet(
-            initialChildSize: 0.8,
-            minChildSize: 0.4,
-            maxChildSize: 0.9,
-            builder: (_, controller) => Stack(
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    color: Color(0xFFECF0F1),
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                  ),
-                  child: Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text("Mis Gimnasios", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                            ElevatedButton(
-                              onPressed: () async {
-                                await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (context) => AddGimnasioScreen()),
-                                );
-                                gimnasios = await _getGimnasiosUsuario();
-                                setState(() {});
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                foregroundColor: Color(0xFF1ABC9C),
-                                shape: CircleBorder(),
-                                padding: EdgeInsets.all(12),
-                              ),
-                              child: Icon(Icons.add, size: 24),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        child: gimnasios.isEmpty
-                            ? Center(
-                          child: Text(
-                            'Aún no tienes gimnasios en tu lista',
-                            style: TextStyle(fontSize: 16, color: Colors.grey),
-                          ),
-                        )
-                            : ListView.builder(
-                          controller: controller,
-                          padding: EdgeInsets.all(16.0),
-                          itemCount: gimnasios.length,
-                          itemBuilder: (context, index) {
-                            final gimnasio = gimnasios[index];
-                            final gimnasioId = gimnasio['pk_gimnasio']?.toString() ?? '';
-                            final nombre = gimnasio['nombre'] ?? 'Sin nombre';
-                            final ciudad = gimnasio['ciudad'] ?? 'Sin ciudad';
-                            final codigoPostal = gimnasio['codigo_postal']?.toString() ?? '';
-                            final cadena = gimnasio['cadena_gimnasio'];
-                            final logo = cadena?['logo'] ?? '';
-                            final isSelected = selectedGimnasioId == gimnasioId;
+        builder: (context, setState) => Scaffold(
+          backgroundColor: Colors.transparent,
+          floatingActionButton: selectedGimnasios.isNotEmpty
+              ? FloatingActionButton.extended(
+            onPressed: isDeleting
+                ? null
+                : () async {
+              try {
+                setState(() {
+                  isDeleting = true;
+                });
 
-                            return InkWell(
-                              onTap: () {
-                                setState(() {
-                                  selectedGimnasioId = isSelected ? null : gimnasioId;
-                                });
-                              },
-                              child: AnimatedContainer(
-                                duration: Duration(milliseconds: 300),
-                                color: isSelected ? Color(0xFF1ABC9C).withOpacity(0.2) : null,
-                                child: ListTile(
-                                  leading: CircleAvatar(
-                                    backgroundImage: logo.isNotEmpty ? NetworkImage(logo) : null,
-                                    backgroundColor: Colors.grey[200],
-                                    child: logo.isEmpty ? Icon(Icons.fitness_center, color: Colors.grey) : null,
-                                  ),
-                                  title: Text(nombre),
-                                  subtitle: Text('$ciudad${codigoPostal.isNotEmpty ? ', $codigoPostal' : ''}'),
-                                  trailing: isSelected ? Icon(Icons.check, color: Color(0xFF1ABC9C)) : null,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
+                // Eliminar todos los gimnasios seleccionados
+                for (String gymId in selectedGimnasios) {
+                  await _gimnasioService.eliminarGymAUsuario(gymId);
+                }
+
+                // Actualizar la lista después de eliminar
+                _gimnasios = await _getGimnasiosUsuario();
+                setState(() {
+                  selectedGimnasios.clear();
+                  isDeleting = false;
+                });
+
+                gimnasiosModificados = true;
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Gimnasio(s) eliminado(s) correctamente'),
+                    backgroundColor: Theme.of(context).colorScheme.primary,
                   ),
+                );
+              } catch (e) {
+                print(e);
+                setState(() {
+                  isDeleting = false;
+                });
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error al eliminar gimnasio(s): $e'),
+                    backgroundColor: Theme.of(context).colorScheme.error,
+                  ),
+                );
+              }
+            },
+            backgroundColor: Theme.of(context).colorScheme.error,
+            foregroundColor: Theme.of(context).colorScheme.onError,
+            icon: isDeleting
+                ? SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(
+                color: Theme.of(context).colorScheme.onError,
+                strokeWidth: 2,
+              ),
+            )
+                : Icon(Icons.delete),
+            label: Text(isDeleting
+                ? 'Eliminando...'
+                : 'Eliminar (${selectedGimnasios.length})'),
+          )
+              : null,
+          body: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => Navigator.of(context).pop(),
+            child: DraggableScrollableSheet(
+              initialChildSize: 0.8,
+              minChildSize: 0.4,
+              maxChildSize: 0.9,
+              builder: (_, controller) => Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                 ),
-                if (selectedGimnasioId != null)
-                  Positioned(
-                    bottom: 16,
-                    left: 0,
-                    right: 0,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: FloatingActionButton.extended(
-                        onPressed: () async {
-                          try {
-                            await _gimnasioService.eliminarGymAUsuario(selectedGimnasioId!);
-                            Navigator.pop(context);
-                            setState(() {
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "Mis Gimnasios",
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineSmall
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                          ElevatedButton(
+                            onPressed: () async {
+                              final result = await Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => AddGimnasioScreen()),
+                              );
 
-                            });
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Gimnasio eliminado correctamente'),
-                                backgroundColor: Color(0xFF1ABC9C),
-                              ),
-                            );
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Error al eliminar gimnasio: $e'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                          }
-                        },
-                        backgroundColor: Colors.red,
-                        icon: Icon(Icons.delete),
-                        label: Text('Eliminar'),
+                              // Si se añadió un gimnasio, actualizar la lista
+                              if (result == true) {
+                                gimnasiosModificados = true;
+                              }
+
+                              _gimnasios = await _getGimnasiosUsuario();
+                              setState(() {});
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Theme.of(context).colorScheme.surface,
+                              foregroundColor: Theme.of(context).colorScheme.primary,
+                              shape: CircleBorder(),
+                              padding: EdgeInsets.all(12),
+                            ),
+                            child: Icon(Icons.add, size: 24),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-              ],
+                    Expanded(
+                      child: _isLoading
+                          ? Center(child: CircularProgressIndicator())
+                          : _gimnasios.isEmpty
+                          ? Center(
+                        child: Text(
+                          'Aún no tienes gimnasios en tu lista',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      )
+                          : ListView.builder(
+                        controller: controller,
+                        padding: EdgeInsets.all(16.0),
+                        itemCount: _gimnasios.length,
+                        itemBuilder: (context, index) {
+                          final gimnasio = _gimnasios[index];
+                          final isSelected =
+                          selectedGimnasios.contains(gimnasio.pk_gimnasio);
+
+                          return InkWell(
+                            onTap: () {
+                              setState(() {
+                                if (isSelected) {
+                                  selectedGimnasios.remove(gimnasio.pk_gimnasio);
+                                } else {
+                                  selectedGimnasios.add(gimnasio.pk_gimnasio);
+                                }
+                              });
+                            },
+                            splashColor: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                            highlightColor:
+                            Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                            child: AnimatedContainer(
+                              duration: Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                              color: isSelected
+                                  ? Theme.of(context).colorScheme.error.withOpacity(0.15)
+                                  : null,
+                              child: ListTile(
+                                leading: CircleAvatar(
+                                  backgroundImage: gimnasio.logo != null &&
+                                      gimnasio.logo!.isNotEmpty
+                                      ? NetworkImage(gimnasio.logo!)
+                                      : null,
+                                  backgroundColor: Theme.of(context).colorScheme.surface,
+                                  child: gimnasio.logo == null || gimnasio.logo!.isEmpty
+                                      ? Icon(Icons.fitness_center,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface
+                                          .withOpacity(0.5))
+                                      : null,
+                                ),
+                                title: Text(
+                                  gimnasio.nombre,
+                                  style: Theme.of(context).textTheme.titleMedium,
+                                ),
+                                subtitle: Text(
+                                  gimnasio.ubicacion,
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                                trailing: AnimatedOpacity(
+                                  duration: Duration(milliseconds: 300),
+                                  opacity: isSelected ? 1.0 : 0.0,
+                                  child: Icon(Icons.check,
+                                      color: Theme.of(context).colorScheme.primary),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
-        )
+        ),
       ),
     );
+    if (gimnasiosModificados) {
+      Navigator.pop(context, true);
+    }
+  }
+
+  Future<void> _editarPerfil(
+      String nombreUsuario, String descripcion, String nombreUsuarioForo) async {
+    try {
+      await _userService.updateUserDataFromEditProfile(
+          nombreUsuario, descripcion, nombreUsuarioForo);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Datos actualizados correctamente'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      setState(() {
+        _userDataFuture = _getUserData();
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al actualizar los datos: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
@@ -206,11 +308,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       body: FutureBuilder<Usuario>(
         future: _userDataFuture,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) return Center(child: CircularProgressIndicator());
-          if (snapshot.hasError) return Center(child: Text('Error: ${snapshot.error}'));
-          if (!snapshot.hasData) return Center(child: Text('No se pudieron cargar los datos.'));
+          if (snapshot.connectionState == ConnectionState.waiting)
+            return Center(child: CircularProgressIndicator());
+          if (snapshot.hasError)
+            return Center(child: Text('Error: ${snapshot.error}'));
+          if (!snapshot.hasData)
+            return Center(child: Text('No se pudieron cargar los datos.'));
 
           final usuario = snapshot.data!;
+          if (_nombreUsuarioController.text.isEmpty) {
+            _nombreUsuarioController.text = usuario.nombreUsuario;
+          }
+          if (_descripcionController.text.isEmpty) {
+            _descripcionController.text = usuario.descripcion ?? '';
+          }
+          if (_nombreUsuarioForoController.text.isEmpty) {
+            _nombreUsuarioForoController.text =
+                usuario.nombreUsuarioForo ?? usuario.nombreUsuario;
+          }
           return SingleChildScrollView(
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 40.0),
@@ -225,7 +340,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           controller: _nombreUsuarioController,
                           validator: (value) => Validators.validateUsername(value ?? ''),
                           decoration: InputDecoration(
-                            prefixIcon: Icon(Icons.person),
+                            prefixIcon: Icon(Icons.person,
+                              color: Theme.of(context).iconTheme.color,
+                            ),
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(50)),
                             labelText: usuario.nombreUsuario,
                             hintText: 'Nombre de usuario',
@@ -239,7 +356,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           controller: _descripcionController,
                           validator: (value) => Validators.validateDescripcion(value ?? ''),
                           decoration: InputDecoration(
-                            prefixIcon: Icon(Icons.edit),
+                            prefixIcon: Icon(Icons.edit,
+                              color: Theme.of(context).iconTheme.color,
+                            ),
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(50)),
                             labelText: usuario.descripcion ?? '',
                             hintText: 'Descripción del perfil',
@@ -253,7 +372,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           controller: _nombreUsuarioForoController,
                           validator: (value) => Validators.validateUsernameForo(value ?? ''),
                           decoration: InputDecoration(
-                            prefixIcon: Icon(Icons.forum),
+                            prefixIcon: Icon(Icons.forum,
+                              color: Theme.of(context).iconTheme.color,
+                            ),
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(50)),
                             labelText: usuario.nombreUsuarioForo ?? usuario.nombreUsuario,
                             hintText: 'Nombre de usuario en foros',
@@ -262,11 +383,35 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       ),
                       SizedBox(height: 25),
                       ElevatedButton(
+                        onPressed: () {
+                          if (_formKey.currentState!.validate()) {
+                            _editarPerfil(
+                              _nombreUsuarioController.text,
+                              _descripcionController.text,
+                              _nombreUsuarioForoController.text,
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.primary,
+                          foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        ),
+                        child: Text(
+                          "Guardar",
+                          style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 25),
+                      ElevatedButton(
                         onPressed: _showAdministrarGimnasios,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Color(0xFF1ABC9C),
-                          side: BorderSide(color: Color(0xFF1ABC9C), width: 2),
+                          backgroundColor: Theme.of(context).colorScheme.surface,
+                          foregroundColor: Theme.of(context).colorScheme.primary,
+                          side: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2),
                           padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                         ),
                         child: Row(

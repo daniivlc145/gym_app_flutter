@@ -3,7 +3,7 @@ class Gimnasio {
   final String pk_gimnasio;
   final String nombre;
   final String ciudad;
-  final String codigo_postal;
+  final String? codigo_postal;
   final String cadena_gimnasio;
   final String? logo;
 
@@ -11,7 +11,7 @@ class Gimnasio {
     required this.pk_gimnasio,
     required this.nombre,
     required this.ciudad,
-    required this.codigo_postal,
+    this.codigo_postal,
     required this.cadena_gimnasio,
     this.logo
 });
@@ -38,6 +38,13 @@ class Gimnasio {
       'cadena_gimnasio': cadena_gimnasio,
       'logo': logo,
     };
+  }
+
+  String get ubicacion {
+    if (codigo_postal != null && codigo_postal!.isNotEmpty && codigo_postal != 'NULL') {
+      return '$ciudad, $codigo_postal';
+    }
+    return ciudad;
   }
 
 

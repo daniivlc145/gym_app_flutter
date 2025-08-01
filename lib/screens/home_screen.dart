@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:gym_app/screens/training_screen.dart';
-import 'package:gym_app/screens/templates_screen.dart';
+import 'package:gym_app/screens/list_templates_screen.dart';
 import 'package:gym_app/screens/profile_screen.dart';
 import 'package:gym_app/screens/settings_screen.dart';
 import 'package:gym_app/screens/forums_screen.dart';
@@ -20,7 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final List<Widget> _pages = [
     TrainingScreen(),
-    TemplatesScreen(),
+    ListTemplatesScreen(),
     SocialScreen(),
     ProfileScreen(),
   ];
@@ -47,9 +47,9 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Container(
             margin: EdgeInsets.symmetric(vertical: 5),
             decoration: BoxDecoration(
-              color: Color(0xFFECF0F1),
+              color: Theme.of(context).cardColor,
+              border: Border.all(color: Theme.of(context).dividerColor, width: 1),
               borderRadius: BorderRadius.circular(50),
-              border: Border.all(color: Color(0xff38434E), width: 1),
             ),
             child: Padding(
               padding: EdgeInsets.all(8.0),
@@ -68,9 +68,9 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Container(
             margin: EdgeInsets.symmetric(vertical: 5),
             decoration: BoxDecoration(
-              color: Color(0xFFECF0F1),
+              color: Theme.of(context).cardColor,
+              border: Border.all(color: Theme.of(context).dividerColor, width: 1),
               borderRadius: BorderRadius.circular(50),
-              border: Border.all(color: Color(0xff38434E), width: 1),
             ),
             child: Padding(
               padding: EdgeInsets.all(8.0),
@@ -89,9 +89,9 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Container(
             margin: EdgeInsets.symmetric(vertical: 5),
             decoration: BoxDecoration(
-              color: Color(0xFFECF0F1),
+              color: Theme.of(context).cardColor,
+              border: Border.all(color: Theme.of(context).dividerColor, width: 1),
               borderRadius: BorderRadius.circular(50),
-              border: Border.all(color: Color(0xff38434E), width: 1),
             ),
             child: Padding(
               padding: EdgeInsets.all(8.0),
@@ -110,9 +110,9 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Container(
             margin: EdgeInsets.symmetric(vertical: 5),
             decoration: BoxDecoration(
-              color: Color(0xFFECF0F1),
+              color: Theme.of(context).cardColor,
+              border: Border.all(color: Theme.of(context).dividerColor, width: 1),
               borderRadius: BorderRadius.circular(50),
-              border: Border.all(color: Color(0xff38434E), width: 1),
             ),
             child: Padding(
               padding: EdgeInsets.all(8.0),
@@ -181,7 +181,7 @@ class _HomeScreenState extends State<HomeScreen> {
             items: const <BottomNavigationBarItem>[
               BottomNavigationBarItem(
                 icon: Icon(Icons.fitness_center),
-                label: 'Entrenamiento',
+                label: 'Entrenar',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.list_alt),

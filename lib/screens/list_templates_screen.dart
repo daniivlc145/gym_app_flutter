@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:gym_app/services/template_service.dart';
+import 'package:gym_app/screens/rutina_screen.dart';
 
-class TemplatesScreen extends StatefulWidget {
+class ListTemplatesScreen extends StatefulWidget {
   @override
   _TemplatesScreenState createState() => _TemplatesScreenState();
 }
 
-class _TemplatesScreenState extends State<TemplatesScreen> {
+class _TemplatesScreenState extends State<ListTemplatesScreen> {
   final TemplateService _templateService = TemplateService();
   int numeroPlantillas = 0;
   List<Map<String, dynamic>> rutinas = [];
@@ -24,15 +25,11 @@ class _TemplatesScreenState extends State<TemplatesScreen> {
     });
 
     try {
-      // Cargar número de plantillas
       final numero = await _templateService.getNumeroPlantillasDeUsuarioActivo();
-
-      // Cargar las rutinas si hay alguna
       List<Map<String, dynamic>> rutinasData = [];
       if (numero > 0) {
         rutinasData = await _templateService.getRutinasDeUsuarioActivo();
       }
-
       setState(() {
         numeroPlantillas = numero;
         rutinas = rutinasData;
@@ -49,14 +46,13 @@ class _TemplatesScreenState extends State<TemplatesScreen> {
     }
   }
 
-  // Función para eliminar una rutina
   Future<void> _eliminarRutina(String rutinaId) async {
     try {
       await _templateService.eliminarRutina(rutinaId);
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Rutina eliminada correctamente'), backgroundColor: Colors.green)
       );
-      _cargarDatos(); // Recargar datos después de eliminar
+      _cargarDatos();
     } catch (e) {
       print('Error al eliminar rutina: $e');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -65,31 +61,31 @@ class _TemplatesScreenState extends State<TemplatesScreen> {
     }
   }
 
-  // Función para mostrar el diálogo de confirmación
   Future<void> _mostrarDialogoConfirmacion(String rutinaId, String nombreRutina) async {
+    final theme = Theme.of(context);
     return showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Eliminar rutina'),
+          title: Text('Eliminar rutina', style: theme.textTheme.titleMedium),
           content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
-                Text('¿Estás seguro de que quieres eliminar la rutina "$nombreRutina"?'),
-                Text('Esta acción no se puede deshacer.'),
+                Text('¿Estás seguro de que quieres eliminar la rutina "$nombreRutina"?', style: theme.textTheme.bodyLarge),
+                Text('Esta acción no se puede deshacer.', style: theme.textTheme.bodyMedium),
               ],
             ),
           ),
           actions: <Widget>[
             TextButton(
-              child: Text('Cancelar'),
+              child: Text('Cancelar', style: theme.textTheme.bodyLarge),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
-              child: Text('Eliminar', style: TextStyle(color: Colors.red)),
+              child: Text('Eliminar', style: theme.textTheme.bodyLarge?.copyWith(color: theme.colorScheme.error)),
               onPressed: () {
                 Navigator.of(context).pop();
                 _eliminarRutina(rutinaId);
@@ -101,49 +97,33 @@ class _TemplatesScreenState extends State<TemplatesScreen> {
     );
   }
 
-  // Función para navegar a la pantalla de edición
   void _navegarAEditarRutina(String rutinaId) {
-    // Aquí implementarías la navegación a la pantalla de edición
-    // Por ejemplo:
-    // Navigator.push(
-    //   context,
-    //   MaterialPageRoute(builder: (context) => EditarRutinaScreen(rutinaId: rutinaId)),
-    // ).then((_) => _cargarDatos());
-
-    ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Navegando a editar rutina ID: $rutinaId'))
-    );
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => RutinaScreen(rutinaId: rutinaId)),
+    ).then((_) => _cargarDatos());
   }
 
-  // Función para navegar a la pantalla de añadir rutina
   void _navegarAAddRutina() {
-    // Aquí implementarías la navegación a la pantalla de añadir rutina
-    // Por ejemplo:
-    // Navigator.push(
-    //   context,
-    //   MaterialPageRoute(builder: (context) => AddRutinaScreen()),
-    // ).then((_) => _cargarDatos());
-
-    ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Navegando a añadir rutina'))
-    );
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => RutinaScreen()),
+    ).then((_) => _cargarDatos());
   }
 
-  // Función para navegar a la pantalla de entrenamiento
   void _navegarAEntrenamiento(String rutinaId) {
-
     ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Entrenamiento en marcha!'))
     );
   }
 
-  // Widget para mostrar una tarjeta de rutina
   Widget _construirTarjetaRutina(Map<String, dynamic> rutina) {
+    final theme = Theme.of(context);
+
     final String rutinaId = rutina['pk_rutina'];
     final String nombreRutina = rutina['nombre'];
     final ejercicios = rutina['ejercicios'];
 
-    // Extraer nombres de ejercicios para el resumen
     List<String> nombresEjercicios = [];
     if (ejercicios is Map) {
       ejercicios.forEach((key, value) {
@@ -156,6 +136,7 @@ class _TemplatesScreenState extends State<TemplatesScreen> {
     return Card(
       margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       elevation: 3,
+      color: theme.cardColor,
       child: Padding(
         padding: EdgeInsets.all(16),
         child: Column(
@@ -167,22 +148,19 @@ class _TemplatesScreenState extends State<TemplatesScreen> {
                 Expanded(
                   child: Text(
                     nombreRutina,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, fontSize: 18),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 Row(
                   children: [
                     IconButton(
-                      icon: Icon(Icons.edit, color: Colors.blue),
+                      icon: Icon(Icons.edit, color: theme.colorScheme.primary),
                       onPressed: () => _navegarAEditarRutina(rutinaId),
                       tooltip: 'Editar',
                     ),
                     IconButton(
-                      icon: Icon(Icons.delete, color: Colors.red),
+                      icon: Icon(Icons.delete, color: theme.colorScheme.error),
                       onPressed: () => _mostrarDialogoConfirmacion(rutinaId, nombreRutina),
                       tooltip: 'Eliminar',
                     ),
@@ -191,27 +169,20 @@ class _TemplatesScreenState extends State<TemplatesScreen> {
               ],
             ),
             SizedBox(height: 8),
-            Text(
-              'Ejercicios:',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: 4),
             nombresEjercicios.isEmpty
-                ? Text('No hay ejercicios en esta rutina', style: TextStyle(fontStyle: FontStyle.italic))
+                ? Text('No hay ejercicios en esta rutina', style: theme.textTheme.bodyMedium?.copyWith(fontStyle: FontStyle.italic))
                 : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: nombresEjercicios
-                  .take(3) // Mostrar solo los primeros 3 ejercicios
+                  .take(3)
                   .map((nombre) => Padding(
                 padding: EdgeInsets.only(bottom: 2),
-                child: Text('• $nombre'),
+                child: Text('• $nombre', style: theme.textTheme.bodyMedium),
               ))
                   .toList(),
             ),
             if (nombresEjercicios.length > 3)
-              Text('... y ${nombresEjercicios.length - 3} más', style: TextStyle(fontStyle: FontStyle.italic)),
+              Text('... y ${nombresEjercicios.length - 3} más', style: theme.textTheme.bodyMedium?.copyWith(fontStyle: FontStyle.italic)),
             SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
@@ -219,8 +190,8 @@ class _TemplatesScreenState extends State<TemplatesScreen> {
                 icon: Icon(Icons.fitness_center),
                 label: Text('INICIAR ENTRENAMIENTO'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF1ABC9C),
-                  foregroundColor: Colors.white,
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
                   padding: EdgeInsets.symmetric(vertical: 12),
                 ),
                 onPressed: () => _navegarAEntrenamiento(rutinaId),
@@ -234,6 +205,8 @@ class _TemplatesScreenState extends State<TemplatesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Plantillas de entrenamiento'),
@@ -247,15 +220,14 @@ class _TemplatesScreenState extends State<TemplatesScreen> {
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: Color(0xFF1ABC9C),
+                color: theme.colorScheme.primary,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
                 'En uso: $numeroPlantillas/7',
-                style: TextStyle(
+                style: theme.textTheme.bodyLarge?.copyWith(
                   fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: Colors.white,
+                  color: theme.colorScheme.onPrimary,
                 ),
               ),
             ),
@@ -269,21 +241,18 @@ class _TemplatesScreenState extends State<TemplatesScreen> {
                   Icon(
                     Icons.fitness_center,
                     size: 80,
-                    color: Colors.grey,
+                    color: theme.colorScheme.secondary,
                   ),
                   SizedBox(height: 16),
                   Text(
                     'Aún no tienes rutinas',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 8),
                   Text(
                     'Crea tu primera rutina para comenzar',
-                    style: TextStyle(
-                      color: Colors.grey[600],
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.secondary.withOpacity(0.7),
                     ),
                   ),
                   SizedBox(height: 24),
@@ -291,8 +260,8 @@ class _TemplatesScreenState extends State<TemplatesScreen> {
                     icon: Icon(Icons.add),
                     label: Text('CREAR RUTINA'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF1ABC9C),
-                      foregroundColor: Colors.white,
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
                       padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                     ),
                     onPressed: _navegarAAddRutina,
@@ -312,7 +281,8 @@ class _TemplatesScreenState extends State<TemplatesScreen> {
       floatingActionButton: numeroPlantillas > 0 && numeroPlantillas < 7
           ? FloatingActionButton(
         onPressed: _navegarAAddRutina,
-        backgroundColor: Color(0xFF1ABC9C),
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: theme.colorScheme.onPrimary,
         child: Icon(Icons.add),
         tooltip: 'Añadir rutina',
       )
