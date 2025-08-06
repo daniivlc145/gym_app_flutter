@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../screens/forum_settings_screen.dart';
+
 class ForumFilterHeader extends StatefulWidget {
   final Function(String) onChanged;
   const ForumFilterHeader({Key? key, required this.onChanged}) : super(key: key);
@@ -20,38 +22,59 @@ class _ForumFilterHeaderState extends State<ForumFilterHeader> {
         Container(
           padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: options.map((option) {
-              final bool isSelected = selected == option;
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    selected = option;
-                    widget.onChanged(option);
-                  });
-                },
-                child: AnimatedContainer(
-                  duration: Duration(milliseconds: 300),
-                  margin: EdgeInsets.symmetric(horizontal: 6),
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    option,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: isSelected
-                          ? Theme.of(context).colorScheme.primary
-                          : Colors.grey[500],
-                    ),
-                  ),
+            children: [
+              // Filtros centrados manualmente usando Expanded
+              Expanded(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: options.map((option) {
+                    final bool isSelected = selected == option;
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          selected = option;
+                          widget.onChanged(option);
+                        });
+                      },
+                      child: AnimatedContainer(
+                        duration: Duration(milliseconds: 300),
+                        margin: EdgeInsets.symmetric(horizontal: 6),
+                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          option,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: isSelected
+                                ? Theme.of(context).colorScheme.primary
+                                : Colors.grey[500],
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
                 ),
-              );
-            }).toList(),
+              ),
+
+              // Icono de ajustes a la derecha
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => ForumSettingsScreen()),
+                  );
+                },
+                child: Icon(
+                  Icons.settings,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            ],
           ),
         ),
         Divider(
@@ -62,4 +85,5 @@ class _ForumFilterHeaderState extends State<ForumFilterHeader> {
       ],
     );
   }
+
 }

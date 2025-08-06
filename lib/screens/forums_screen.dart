@@ -29,8 +29,7 @@ class _ForumsScreenState extends State<ForumsScreen> {
           children: [
             ForumFilterHeader(
               onChanged: (value) {
-                // Cambiar lógica de orden: 'Popular' o 'Último'
-                print("Seleccionado: $value");
+
               },
             ),
           ],
