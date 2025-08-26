@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/Ejercicio.dart';
 import '../../models/Serie.dart';
+import 'nombre_ejercicio_widget.dart';
 import 'serie_editor.dart';
 
 class EjercicioCard extends StatelessWidget {
@@ -42,7 +43,7 @@ class EjercicioCard extends StatelessWidget {
       child: Column(
         children: [
           ListTile(
-            title: Text(ejercicio.nombre),
+            title: NombreEjercicioWidget(pkEjercicio: ejercicio.pk_ejercicio.toString()),
             trailing: IconButton(
               icon: Icon(Icons.delete, color: theme.colorScheme.error),
               onPressed: onRemove,

@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:gym_app/models/Usuario.dart';
 import 'package:gym_app/screens/add_gimnasio_screen.dart';
@@ -14,7 +17,6 @@ class EditProfileScreen extends StatefulWidget {
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nombreUsuarioController = TextEditingController();
-  final TextEditingController _nombreUsuarioForoController = TextEditingController();
   final TextEditingController _descripcionController = TextEditingController();
 
   final UserService _userService = UserService();
@@ -119,10 +121,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ? SizedBox(
               width: 24,
               height: 24,
-              child: CircularProgressIndicator(
-                color: Theme.of(context).colorScheme.onError,
-                strokeWidth: 2,
-              ),
+              child: Platform.isAndroid
+                  ? const CircularProgressIndicator()
+                  : const CupertinoActivityIndicator(),
             )
                 : Icon(Icons.delete),
             label: Text(isDeleting
@@ -269,10 +270,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _editarPerfil(
-      String nombreUsuario, String descripcion, String nombreUsuarioForo) async {
+      String nombreUsuario, String descripcion) async {
     try {
       await _userService.updateUserDataFromEditProfile(
-          nombreUsuario, descripcion, nombreUsuarioForo);
+          nombreUsuario, descripcion);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Datos actualizados correctamente'),
@@ -296,7 +297,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   void dispose() {
     _nombreUsuarioController.dispose();
-    _nombreUsuarioForoController.dispose();
     _descripcionController.dispose();
     super.dispose();
   }
@@ -322,10 +322,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           if (_descripcionController.text.isEmpty) {
             _descripcionController.text = usuario.descripcion ?? '';
           }
-          if (_nombreUsuarioForoController.text.isEmpty) {
-            _nombreUsuarioForoController.text =
-                usuario.nombreUsuarioForo ?? usuario.nombreUsuario;
-          }
           return SingleChildScrollView(
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 40.0),
@@ -334,6 +330,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   key: _formKey,
                   child: Column(
                     children: [
+                      SizedBox(height: 50),
                       SizedBox(
                         width: 300,
                         child: TextFormField(
@@ -366,29 +363,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         ),
                       ),
                       SizedBox(height: 25),
-                      SizedBox(
-                        width: 300,
-                        child: TextFormField(
-                          controller: _nombreUsuarioForoController,
-                          validator: (value) => Validators.validateUsernameForo(value ?? ''),
-                          decoration: InputDecoration(
-                            prefixIcon: Icon(Icons.forum,
-                              color: Theme.of(context).iconTheme.color,
-                            ),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(50)),
-                            labelText: usuario.nombreUsuarioForo ?? usuario.nombreUsuario,
-                            hintText: 'Nombre de usuario en foros',
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 25),
                       ElevatedButton(
                         onPressed: () {
                           if (_formKey.currentState!.validate()) {
                             _editarPerfil(
                               _nombreUsuarioController.text,
                               _descripcionController.text,
-                              _nombreUsuarioForoController.text,
                             );
                           }
                         },

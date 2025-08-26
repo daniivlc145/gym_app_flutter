@@ -20,6 +20,13 @@ class Ejercicio {
     );
   }
 
+  factory Ejercicio.fromId(int pkEjercicio) => Ejercicio(
+    pk_ejercicio: pkEjercicio,
+    nombre: '',
+    grupo_muscular: '',
+    equipamiento: '',
+  );
+
   Map<String, dynamic> toMap() {
     return {
       'pk_ejercicio': pk_ejercicio,
@@ -27,5 +34,19 @@ class Ejercicio {
       'grupo_muscular': grupo_muscular,
       'equipamiento': equipamiento,
     };
+  }
+
+  Ejercicio copyWith({
+    int? pk_ejercicio,
+    String? nombre,
+    String? grupo_muscular,
+    String? equipamiento,
+  }) {
+    return Ejercicio(
+      pk_ejercicio: pk_ejercicio ?? this.pk_ejercicio,
+      nombre: nombre ?? this.nombre,
+      grupo_muscular: grupo_muscular ?? this.grupo_muscular,
+      equipamiento: equipamiento ?? this.equipamiento,
+    );
   }
 }

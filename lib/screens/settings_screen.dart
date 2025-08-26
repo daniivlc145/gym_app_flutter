@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:gym_app/screens/login_screen.dart';
 import 'package:gym_app/services/auth_service.dart';
@@ -148,7 +149,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         future: _userDataFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return Center(child: Platform.isAndroid
+                ? const CircularProgressIndicator()
+                : const CupertinoActivityIndicator(),
+            );
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (!snapshot.hasData) {

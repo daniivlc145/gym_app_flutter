@@ -13,8 +13,6 @@ class TemplateService {
           .select()
           .eq('fk_usuario', id);
 
-      print('ID usuario: $id');
-      print('RUTINAS: $rutinaList'); // Mostrará la lista de rutinas encontradas
 
       final count = rutinaList.length;
 

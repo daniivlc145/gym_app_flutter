@@ -20,7 +20,7 @@ class AppTheme {
       titleTextStyle: TextStyle(color: secondary, fontSize: 20),
       elevation: 0,
     ),
-    iconTheme: IconThemeData(color: secondary), // ICONOS DEFAULT SECUNDARIO
+    iconTheme: IconThemeData(color: secondary),
     textTheme: TextTheme(
       bodyLarge: TextStyle(color: secondary),
       bodyMedium: TextStyle(color: secondary),

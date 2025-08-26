@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:gym_app/screens/friend_profile_screen.dart';
 import 'package:gym_app/models/Usuario.dart';
@@ -444,7 +447,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         future: _gimnasiosFuture,
         builder: (context, snapshot) {
       if (snapshot.connectionState == ConnectionState.waiting) {
-        return Center(child: CircularProgressIndicator());
+        return Center(child: Platform.isAndroid
+            ? const CircularProgressIndicator()
+            : const CupertinoActivityIndicator(),);
       }
       if (snapshot.hasError) {
         return Center(child: Text('Error: ${snapshot.error}'));
@@ -472,34 +477,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
     title: Text('Mis Gimnasios', style: theme.textTheme.titleMedium),
     children: [
     Container(
-    constraints: BoxConstraints(maxHeight: 200),
-    child: ListView.builder(
-    shrinkWrap: true,
-    physics: ClampingScrollPhysics(),
-    itemCount: gimnasios.length,
-    itemBuilder: (context, index) {
-    final gimnasio = gimnasios[index];
-    return ListTile(
-    leading: CircleAvatar(
-    backgroundImage: gimnasio.logo != null && gimnasio.logo!.isNotEmpty
-    ? NetworkImage(gimnasio.logo!)
-        : null,
-    backgroundColor: theme.colorScheme.surface,
-    child: gimnasio.logo == null || gimnasio.logo!.isEmpty
-    ? Icon(Icons.fitness_center, color: theme.colorScheme.secondary)
-        : null,
-    ),
-      title: Text(
-        gimnasio.nombre,
-        style: theme.textTheme.bodyLarge,
+      constraints: BoxConstraints(maxHeight: 200),
+      child: ListView.builder(
+        shrinkWrap: true,
+        physics: ClampingScrollPhysics(),
+        itemCount: gimnasios.length,
+        itemBuilder: (context, index) {
+          final gimnasio = gimnasios[index];
+          return ListTile(
+            leading: CircleAvatar(
+              backgroundImage: gimnasio.logo != null && gimnasio.logo!.isNotEmpty
+              ? NetworkImage(gimnasio.logo!)
+                  : null,
+              backgroundColor: theme.colorScheme.surface,
+              child: gimnasio.logo == null || gimnasio.logo!.isEmpty
+              ? Icon(Icons.fitness_center, color: theme.colorScheme.secondary)
+                  : null,
+            ),
+              title: Text(
+                gimnasio.nombre,
+                style: theme.textTheme.bodyLarge,
+              ),
+              subtitle: Text(
+                gimnasio.ubicacion,
+                style: theme.textTheme.bodyMedium,
+              ),
+          );
+        },
       ),
-      subtitle: Text(
-        gimnasio.ubicacion,
-        style: theme.textTheme.bodyMedium,
-      ),
-    );
-    },
-    ),
     ),
     ],
     ),

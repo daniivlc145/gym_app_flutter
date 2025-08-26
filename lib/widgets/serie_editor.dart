@@ -71,109 +71,149 @@ class SerieEditor extends StatelessWidget {
                   itemCount: series.length,
                   itemBuilder: (context, index) {
                     final serie = series[index];
+                    // Prepara valores a mostrar
+                    String repsText = '- reps';
+                    String pesoText = '- kg';
 
-                    return Dismissible(
-                      key: Key('serie-${serie.numeroSerie}'),
-                      direction: DismissDirection.endToStart,
-                      background: Container(
-                        color: Colors.red,
-                        alignment: Alignment.centerRight,
-                        padding: EdgeInsets.symmetric(horizontal: 16),
-                        child: Icon(Icons.delete, color: Colors.white),
-                      ),
-                      onDismissed: (direction) {
-                        onEliminarSerie(index);
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          border: Border(bottom: BorderSide(color: borderColor, width: 0.5)),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Expanded(
-                                flex: 2,
-                                child: Center(
-                                  child: InkWell(
-                                    onTap: () {
-                                      showModalBottomSheet(
-                                        context: context,
-                                        builder: (context) {
-                                          return Container(
-                                            padding: EdgeInsets.all(16),
-                                            child: Column(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: TipoSerie.values.map((tipo) {
-                                                return ListTile(
-                                                  leading: CircleAvatar(
-                                                    backgroundColor: theme.colorScheme.primary,
-                                                    radius: 15,
-                                                    child: Text(
-                                                      _getAbreviacionTipo(tipo),
-                                                      style: TextStyle(color: Colors.white, fontSize: 15),
-                                                    ),
-                                                  ),
-                                                  title: Text(tipo.nombre),
-                                                  onTap: () {
-                                                    onActualizarTipoSerie(index, tipo);
-                                                    Navigator.pop(context);
-                                                  },
-                                                );
-                                              }).toList(),
-                                            ),
+                    if (serie.tipo != TipoSerie.dropset) {
+                      if (serie.repeticiones.isNotEmpty) repsText = '${serie.repeticiones.join('-')} reps';
+                      if (serie.peso.isNotEmpty) pesoText = '${serie.peso.join('-')} kg';
+                    }
+                    else if (serie.subseries != null && serie.subseries!.isNotEmpty) {
+                      final primera = serie.subseries!.first;
+                      if (primera.repeticiones.isNotEmpty) repsText = '${primera.repeticiones.join('-')} reps';
+                      if (primera.peso.isNotEmpty) pesoText = '${primera.peso.join('-')} kg';
+                    }
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Dismissible(
+                          key: Key('serie-${serie.numeroSerie}'),
+                          direction: DismissDirection.endToStart,
+                          background: Container(
+                            color: Colors.red,
+                            alignment: Alignment.centerRight,
+                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            child: Icon(Icons.delete, color: Colors.white),
+                          ),
+                          onDismissed: (direction) {
+                            onEliminarSerie(index);
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              border: Border(bottom: BorderSide(color: borderColor, width: 0.5)),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Expanded(
+                                    flex: 2,
+                                    child: Center(
+                                      child: InkWell(
+                                        onTap: () {
+                                          showModalBottomSheet(
+                                            context: context,
+                                            builder: (context) {
+                                              return Container(
+                                                padding: EdgeInsets.all(16),
+                                                child: Column(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: TipoSerie.values.map((tipo) {
+                                                    return ListTile(
+                                                      leading: CircleAvatar(
+                                                        backgroundColor: theme.colorScheme.primary,
+                                                        radius: 15,
+                                                        child: Text(
+                                                          _getAbreviacionTipo(tipo),
+                                                          style: TextStyle(color: Colors.white, fontSize: 15),
+                                                        ),
+                                                      ),
+                                                      title: Text(tipo.nombre),
+                                                      onTap: () {
+                                                        onActualizarTipoSerie(index, tipo);
+                                                        Navigator.pop(context);
+                                                      },
+                                                    );
+                                                  }).toList(),
+                                                ),
+                                              );
+                                            },
                                           );
                                         },
-                                      );
-                                    },
-                                    child: CircleAvatar(
-                                      backgroundColor: theme.colorScheme.primary,
-                                      radius: 15,
-                                      child: Text(
-                                        _getAbreviacionTipo(serie.tipo),
-                                        style: TextStyle(color: Colors.white, fontSize: 15),
+                                        child: CircleAvatar(
+                                          backgroundColor: theme.colorScheme.primary,
+                                          radius: 15,
+                                          child: Text(
+                                            _getAbreviacionTipo(serie.tipo),
+                                            style: TextStyle(color: Colors.white, fontSize: 15),
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              ),
-                              Expanded(
-                                flex: 3,
-                                child: Center(child: Text('-')),
-                              ),
-                              Expanded(
-                                flex: 3,
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text('-'),
-                                      const SizedBox(width: 6),
-                                      Text('reps')
-                                    ],
+                                  Expanded(
+                                    flex: 3,
+                                    child: Center(child: Text('-')),
                                   ),
-                                ),
-                              ),
-                              Expanded(
-                                flex: 3,
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text('-'),
-                                      const SizedBox(width: 6),
-                                      Text('kg')
-                                    ],
+                                  Expanded(
+                                    flex: 3,
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Text(repsText),
+                                        ],
+                                      ),
+                                    ),
                                   ),
-                                ),
+                                  Expanded(
+                                    flex: 3,
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Text(pesoText),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
                         ),
-                      ),
+                        if (serie.tipo == TipoSerie.dropset)
+                            Padding(
+                              padding: const EdgeInsets.only(left: 32, top: 4, right: 0, bottom: 4),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: serie.subseries!
+                                    .skip(1)
+                                    .map((subSerie) {
+                                  String subReps = subSerie.repeticiones.isNotEmpty
+                                      ? '${subSerie.repeticiones.join('-')} reps'
+                                      : '- reps';
+                                  String subPeso = subSerie.peso.isNotEmpty
+                                      ? '${subSerie.peso.join('-')} kg'
+                                      : '- kg';
+                                  return Row(
+                                    children: [
+                                      Text('↳ ', style: TextStyle(fontSize: 12)),
+                                      Text(
+                                        '$subReps | $subPeso',
+                                        style: TextStyle(fontSize: 14),
+                                      ),
+                                    ],
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                      ],
                     );
                   },
                 ),

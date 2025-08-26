@@ -1,13 +1,17 @@
+import 'dart:io';
+
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:gym_app/services/template_service.dart';
 import 'package:gym_app/screens/rutina_screen.dart';
+import 'package:gym_app/widgets/rutina_card.dart';
 
 class ListTemplatesScreen extends StatefulWidget {
   @override
-  _TemplatesScreenState createState() => _TemplatesScreenState();
+  _ListTemplatesScreenState createState() => _ListTemplatesScreenState();
 }
 
-class _TemplatesScreenState extends State<ListTemplatesScreen> {
+class _ListTemplatesScreenState extends State<ListTemplatesScreen> {
   final TemplateService _templateService = TemplateService();
   int numeroPlantillas = 0;
   List<Map<String, dynamic>> rutinas = [];
@@ -20,9 +24,7 @@ class _TemplatesScreenState extends State<ListTemplatesScreen> {
   }
 
   Future<void> _cargarDatos() async {
-    setState(() {
-      isLoading = true;
-    });
+    setState(() => isLoading = true);
 
     try {
       final numero = await _templateService.getNumeroPlantillasDeUsuarioActivo();
@@ -38,7 +40,7 @@ class _TemplatesScreenState extends State<ListTemplatesScreen> {
     } catch (e) {
       print('Error al cargar datos: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al cargar datos: $e'), backgroundColor: Colors.red)
+        SnackBar(content: Text('Error al cargar datos: $e'), backgroundColor: Colors.red),
       );
       setState(() {
         isLoading = false;
@@ -50,13 +52,13 @@ class _TemplatesScreenState extends State<ListTemplatesScreen> {
     try {
       await _templateService.eliminarRutina(rutinaId);
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Rutina eliminada correctamente'), backgroundColor: Colors.green)
+        SnackBar(content: Text('Rutina eliminada correctamente'), backgroundColor: Colors.green),
       );
       _cargarDatos();
     } catch (e) {
       print('Error al eliminar rutina: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al eliminar rutina: $e'), backgroundColor: Colors.red)
+        SnackBar(content: Text('Error al eliminar rutina: $e'), backgroundColor: Colors.red),
       );
     }
   }
@@ -66,7 +68,7 @@ class _TemplatesScreenState extends State<ListTemplatesScreen> {
     return showDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (BuildContext context) {
+      builder: (context) {
         return AlertDialog(
           title: Text('Eliminar rutina', style: theme.textTheme.titleMedium),
           content: SingleChildScrollView(
@@ -80,9 +82,7 @@ class _TemplatesScreenState extends State<ListTemplatesScreen> {
           actions: <Widget>[
             TextButton(
               child: Text('Cancelar', style: theme.textTheme.bodyLarge),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+              onPressed: () => Navigator.of(context).pop(),
             ),
             TextButton(
               child: Text('Eliminar', style: theme.textTheme.bodyLarge?.copyWith(color: theme.colorScheme.error)),
@@ -113,93 +113,7 @@ class _TemplatesScreenState extends State<ListTemplatesScreen> {
 
   void _navegarAEntrenamiento(String rutinaId) {
     ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Entrenamiento en marcha!'))
-    );
-  }
-
-  Widget _construirTarjetaRutina(Map<String, dynamic> rutina) {
-    final theme = Theme.of(context);
-
-    final String rutinaId = rutina['pk_rutina'];
-    final String nombreRutina = rutina['nombre'];
-    final ejercicios = rutina['ejercicios'];
-
-    List<String> nombresEjercicios = [];
-    if (ejercicios is Map) {
-      ejercicios.forEach((key, value) {
-        if (value is Map && value.containsKey('nombre')) {
-          nombresEjercicios.add(value['nombre']);
-        }
-      });
-    }
-
-    return Card(
-      margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-      elevation: 3,
-      color: theme.cardColor,
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    nombreRutina,
-                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, fontSize: 18),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Row(
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.edit, color: theme.colorScheme.primary),
-                      onPressed: () => _navegarAEditarRutina(rutinaId),
-                      tooltip: 'Editar',
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.delete, color: theme.colorScheme.error),
-                      onPressed: () => _mostrarDialogoConfirmacion(rutinaId, nombreRutina),
-                      tooltip: 'Eliminar',
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            SizedBox(height: 8),
-            nombresEjercicios.isEmpty
-                ? Text('No hay ejercicios en esta rutina', style: theme.textTheme.bodyMedium?.copyWith(fontStyle: FontStyle.italic))
-                : Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: nombresEjercicios
-                  .take(3)
-                  .map((nombre) => Padding(
-                padding: EdgeInsets.only(bottom: 2),
-                child: Text('• $nombre', style: theme.textTheme.bodyMedium),
-              ))
-                  .toList(),
-            ),
-            if (nombresEjercicios.length > 3)
-              Text('... y ${nombresEjercicios.length - 3} más', style: theme.textTheme.bodyMedium?.copyWith(fontStyle: FontStyle.italic)),
-            SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                icon: Icon(Icons.fitness_center),
-                label: Text('INICIAR ENTRENAMIENTO'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.colorScheme.primary,
-                  foregroundColor: theme.colorScheme.onPrimary,
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                ),
-                onPressed: () => _navegarAEntrenamiento(rutinaId),
-              ),
-            ),
-          ],
-        ),
-      ),
+      SnackBar(content: Text('Entrenamiento en marcha!')),
     );
   }
 
@@ -212,7 +126,9 @@ class _TemplatesScreenState extends State<ListTemplatesScreen> {
         title: Text('Plantillas de entrenamiento'),
       ),
       body: isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? Center(child: Platform.isAndroid
+          ? const CircularProgressIndicator()
+          : const CupertinoActivityIndicator(),)
           : Column(
         children: [
           Padding(
@@ -272,7 +188,13 @@ class _TemplatesScreenState extends State<ListTemplatesScreen> {
                 : ListView.builder(
               itemCount: rutinas.length,
               itemBuilder: (context, index) {
-                return _construirTarjetaRutina(rutinas[index]);
+                final rutina = rutinas[index];
+                return CardRutina(
+                  rutina: rutina,
+                  onEditar: _navegarAEditarRutina,
+                  onEliminar: _mostrarDialogoConfirmacion,
+                  onEntrenar: _navegarAEntrenamiento,
+                );
               },
             ),
           ),

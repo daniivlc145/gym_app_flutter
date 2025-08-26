@@ -39,13 +39,37 @@ class _RutinaScreenState extends State<RutinaScreen> {
     try {
       final data = await _templateService.getRutinaPorId(widget.rutinaId!);
       _nombreController.text = data['nombre'] ?? '';
-      final ejerciciosRaw = data['ejercicios'] ?? [];
-      _ejercicios = List<Ejercicio>.from(
-          ejerciciosRaw.map((ejercicio) => Ejercicio.fromMap(ejercicio)));
 
-      for (var ejercicio in _ejercicios) {
-        _seriesPorEjercicio[ejercicio] = [];
+      // 1. Extrae la lista de ejercicios reales del JSON (puede estar anidada)
+      final ejerciciosRaw = (data['ejercicios'] is Map && data['ejercicios']['ejercicios'] is List)
+          ? data['ejercicios']['ejercicios']
+          : [];
+
+      // 2. Prepara nuevas listas temporales para ejercicios y series
+      final List<Ejercicio> ejerciciosList = [];
+      final Map<Ejercicio, List<Serie>> seriesPorEjercicio = {};
+
+      // 3. Por cada ejercicio, crea el objeto y conecta sus series
+      for (var ej in ejerciciosRaw) {
+        final int pk = ej['pk_ejercicio'];
+        final ejercicio = Ejercicio(
+          pk_ejercicio: pk,
+          nombre: '',            // lo puedes mostrar usando FutureBuilder con getNombreEjercicioPorId
+          grupo_muscular: '',
+          equipamiento: '',
+        );
+        ejerciciosList.add(ejercicio);
+
+        final seriesRaw = ej['series'] as List<dynamic>? ?? [];
+        final seriesList = List<Serie>.from(seriesRaw.map((s) => Serie.fromJson(s)));
+        seriesPorEjercicio[ejercicio] = seriesList;
       }
+
+      // 4. Actualiza el estado
+      setState(() {
+        _ejercicios = ejerciciosList;
+        _seriesPorEjercicio = seriesPorEjercicio;
+      });
     } catch (e) {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text("Error cargando rutina: $e")));

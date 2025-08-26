@@ -14,7 +14,7 @@ class UserService {
 
       final response = await supabase
           .from('usuario')
-          .select('nombre, apellidos, telefono, correo, medidas, nombre_usuario, nombre_usuario_foro, foto_usuario, descripcion')
+          .select('nombre, apellidos, telefono, correo, medidas, nombre_usuario, foto_usuario, descripcion')
           .eq('pk_usuario', user.id)
           .single();
 
@@ -67,7 +67,7 @@ class UserService {
     }
   }
 
-  Future<void> updateUserDataFromEditProfile(String nombreUsuario, String descripcion, String nombreUsuarioForo) async {
+  Future<void> updateUserDataFromEditProfile(String nombreUsuario, String descripcion) async {
     try {
       final user = supabase.auth.currentUser;
 
@@ -79,7 +79,6 @@ class UserService {
       final updateData = {
         'nombre_usuario': nombreUsuario,
         'descripcion': descripcion,
-        'nombre_usuario_foro': nombreUsuarioForo,
       };
 
 
@@ -128,7 +127,7 @@ class UserService {
 
       final response = await supabase
           .from('usuario')
-          .select('nombre, apellidos, telefono, correo, medidas, nombre_usuario, nombre_usuario_foro, foto_usuario, descripcion')
+          .select('nombre, apellidos, telefono, correo, medidas, nombre_usuario, foto_usuario, descripcion')
           .eq('pk_usuario', id)
           .single();
 
