@@ -5,7 +5,7 @@ class CardRutina extends StatelessWidget {
   final Map<String, dynamic> rutina;
   final Function(String rutinaId) onEditar;
   final Function(String rutinaId, String nombreRutina) onEliminar;
-  final Function(String rutinaId) onEntrenar;
+  final Function(Map<String, dynamic> rutina) onEntrenar;
 
   const CardRutina({
     super.key,
@@ -19,14 +19,14 @@ class CardRutina extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    final String rutinaId = rutina['pk_rutina'] ?? '';
+    final String rutinaId = rutina['pk_rutina']?.toString() ?? '';
     final String nombreRutina = rutina['nombre'] ?? '';
     final ejercicios = rutina['ejercicios'];
 
-    // Ahora solo recogemos PKs:
+    // ✅ recoger pk_ejercicios correctamente
     List<String> pkEjercicios = [];
-    if (ejercicios is Map && ejercicios['ejercicios'] is List) {
-      for (var value in ejercicios['ejercicios']) {
+    if (ejercicios is List) {
+      for (var value in ejercicios) {
         if (value is Map && value['pk_ejercicio'] != null) {
           pkEjercicios.add(value['pk_ejercicio'].toString());
         }
@@ -42,13 +42,15 @@ class CardRutina extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // ✅ Cabecera
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
                   child: Text(
                     nombreRutina,
-                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, fontSize: 18),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold, fontSize: 18),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -69,27 +71,36 @@ class CardRutina extends StatelessWidget {
               ],
             ),
             SizedBox(height: 8),
+
+            // ✅ Mostrar ejercicios reales
             pkEjercicios.isEmpty
                 ? Text(
               'No hay ejercicios en esta rutina',
-              style: theme.textTheme.bodyMedium?.copyWith(fontStyle: FontStyle.italic),
+              style: theme.textTheme.bodyMedium
+                  ?.copyWith(fontStyle: FontStyle.italic),
             )
                 : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: pkEjercicios
                   .take(3)
-                  .map((pk) => Padding(
-                padding: EdgeInsets.only(bottom: 2),
-                child: NombreEjercicioWidget(pkEjercicio: pk),
-              ))
+                  .map(
+                    (pk) => Padding(
+                  padding: EdgeInsets.only(bottom: 2),
+                  child: NombreEjercicioWidget(pkEjercicio: pk),
+                ),
+              )
                   .toList(),
             ),
             if (pkEjercicios.length > 3)
               Text(
                 '... y ${pkEjercicios.length - 3} más',
-                style: theme.textTheme.bodyMedium?.copyWith(fontStyle: FontStyle.italic),
+                style: theme.textTheme.bodyMedium
+                    ?.copyWith(fontStyle: FontStyle.italic),
               ),
+
             SizedBox(height: 16),
+
+            // ✅ Botón de iniciar
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -100,7 +111,7 @@ class CardRutina extends StatelessWidget {
                   foregroundColor: theme.colorScheme.onPrimary,
                   padding: EdgeInsets.symmetric(vertical: 12),
                 ),
-                onPressed: () => onEntrenar(rutinaId),
+                onPressed: () => onEntrenar(rutina),
               ),
             ),
           ],

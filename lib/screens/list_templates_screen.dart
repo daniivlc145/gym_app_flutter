@@ -6,6 +6,8 @@ import 'package:gym_app/services/template_service.dart';
 import 'package:gym_app/screens/rutina_screen.dart';
 import 'package:gym_app/widgets/rutina_card.dart';
 
+import 'current_training_screen.dart';
+
 class ListTemplatesScreen extends StatefulWidget {
   @override
   _ListTemplatesScreenState createState() => _ListTemplatesScreenState();
@@ -61,6 +63,38 @@ class _ListTemplatesScreenState extends State<ListTemplatesScreen> {
         SnackBar(content: Text('Error al eliminar rutina: $e'), backgroundColor: Colors.red),
       );
     }
+  }
+
+  void _mostrarConfirmacionEntrenamiento(Map<String, dynamic> rutina) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Confirmar"),
+        content: Text("¿Quieres iniciar la rutina \"${rutina['nombre']}\"?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text("Cancelar"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _iniciarEntrenamiento(rutina);
+            },
+            child: Text("Iniciar"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _iniciarEntrenamiento(Map<String, dynamic> rutina) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CurrentTrainingScreen(rutina: rutina),
+      ),
+    );
   }
 
   Future<void> _mostrarDialogoConfirmacion(String rutinaId, String nombreRutina) async {
@@ -193,7 +227,7 @@ class _ListTemplatesScreenState extends State<ListTemplatesScreen> {
                   rutina: rutina,
                   onEditar: _navegarAEditarRutina,
                   onEliminar: _mostrarDialogoConfirmacion,
-                  onEntrenar: _navegarAEntrenamiento,
+                  onEntrenar: _mostrarConfirmacionEntrenamiento,
                 );
               },
             ),

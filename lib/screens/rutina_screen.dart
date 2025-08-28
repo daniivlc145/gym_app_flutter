@@ -40,32 +40,29 @@ class _RutinaScreenState extends State<RutinaScreen> {
       final data = await _templateService.getRutinaPorId(widget.rutinaId!);
       _nombreController.text = data['nombre'] ?? '';
 
-      // 1. Extrae la lista de ejercicios reales del JSON (puede estar anidada)
-      final ejerciciosRaw = (data['ejercicios'] is Map && data['ejercicios']['ejercicios'] is List)
-          ? data['ejercicios']['ejercicios']
-          : [];
-
-      // 2. Prepara nuevas listas temporales para ejercicios y series
+      /// ✅ Definir aquí las listas temporales
       final List<Ejercicio> ejerciciosList = [];
       final Map<Ejercicio, List<Serie>> seriesPorEjercicio = {};
 
-      // 3. Por cada ejercicio, crea el objeto y conecta sus series
+      final ejerciciosRaw = (data['ejercicios'] is List) ? data['ejercicios'] : [];
+
       for (var ej in ejerciciosRaw) {
         final int pk = ej['pk_ejercicio'];
         final ejercicio = Ejercicio(
           pk_ejercicio: pk,
-          nombre: '',            // lo puedes mostrar usando FutureBuilder con getNombreEjercicioPorId
+          nombre: '',
           grupo_muscular: '',
           equipamiento: '',
         );
         ejerciciosList.add(ejercicio);
 
         final seriesRaw = ej['series'] as List<dynamic>? ?? [];
-        final seriesList = List<Serie>.from(seriesRaw.map((s) => Serie.fromJson(s)));
+        final seriesList = List<Serie>.from(
+          seriesRaw.map((s) => Serie.fromJson(s)),
+        );
         seriesPorEjercicio[ejercicio] = seriesList;
       }
 
-      // 4. Actualiza el estado
       setState(() {
         _ejercicios = ejerciciosList;
         _seriesPorEjercicio = seriesPorEjercicio;
@@ -102,33 +99,53 @@ class _RutinaScreenState extends State<RutinaScreen> {
     if (!_formKey.currentState!.validate()) return;
     if (_ejercicios.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Agrega al menos un ejercicio')));
+        SnackBar(content: Text('Agrega al menos un ejercicio')),
+      );
       return;
     }
 
     setState(() => _isLoading = true);
 
     try {
+      // 🔥 Construcción del JSON completo de ejercicios
+      final ejerciciosJson = _ejercicios.asMap().entries.map((entry) {
+        final index = entry.key;
+        final ejercicio = entry.value;
+
+        return {
+          "orden": index + 1,
+          "pk_ejercicio": ejercicio.pk_ejercicio,
+          "series": (_seriesPorEjercicio[ejercicio] ?? [])
+              .map((serie) => serie.toJson()) // 🔥 directo
+              .toList(),
+        };
+      }).toList();
+
+      // ======== Guardado en Supabase ========
       if (isEdit) {
         await _templateService.actualizarRutina(
           widget.rutinaId!,
           _nombreController.text,
-          _ejercicios.map((e) => {"id": e.pk_ejercicio}).toList(),
+          ejerciciosJson,
         );
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Rutina actualizada')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Rutina actualizada')),
+        );
       } else {
         await _templateService.crearRutina(
           _nombreController.text,
-          _ejercicios.map((e) => {"id": e.pk_ejercicio}).toList(),
+          ejerciciosJson,
         );
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Rutina creada')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Rutina creada')),
+        );
       }
+
       Navigator.pop(context, true);
     } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Error: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
     } finally {
       setState(() => _isLoading = false);
     }
@@ -164,29 +181,44 @@ class _RutinaScreenState extends State<RutinaScreen> {
     });
   }
 
-  void _actualizarTipoSerie(
-      Ejercicio ejercicio, int index, TipoSerie nuevoTipo) {
+  void _actualizarTipoSerie(Ejercicio ejercicio, int index, TipoSerie nuevoTipo) {
     setState(() {
       final serie = _seriesPorEjercicio[ejercicio]![index];
-      _seriesPorEjercicio[ejercicio]![index] = serie.copyWith(tipo: nuevoTipo);
+
+      if (nuevoTipo == TipoSerie.dropset) {
+        _seriesPorEjercicio[ejercicio]![index] = serie.copyWith(
+          tipo: nuevoTipo,
+          subseries: [
+            Serie(
+              tipo: TipoSerie.normal,
+              peso: [],
+              repeticiones: [],
+              numeroSerie: 1,
+            )
+          ],
+        );
+      } else {
+        _seriesPorEjercicio[ejercicio]![index] = serie.copyWith(
+          tipo: nuevoTipo,
+          subseries: null,
+        );
+      }
     });
   }
 
   void _actualizarRepeticiones(Ejercicio ejercicio, int index, int valor) {
     setState(() {
       final serie = _seriesPorEjercicio[ejercicio]![index];
-      final nuevasRepeticiones = List<int>.from(serie.repeticiones);
-      nuevasRepeticiones.add(valor);
+      final nuevasReps = List<int>.from(serie.repeticiones)..add(valor);
       _seriesPorEjercicio[ejercicio]![index] =
-          serie.copyWith(repeticiones: nuevasRepeticiones);
+          serie.copyWith(repeticiones: nuevasReps);
     });
   }
 
   void _actualizarPeso(Ejercicio ejercicio, int index, double valor) {
     setState(() {
       final serie = _seriesPorEjercicio[ejercicio]![index];
-      final nuevosPesos = List<double>.from(serie.peso);
-      nuevosPesos.add(valor);
+      final nuevosPesos = List<double>.from(serie.peso)..add(valor);
       _seriesPorEjercicio[ejercicio]![index] =
           serie.copyWith(peso: nuevosPesos);
     });
@@ -203,7 +235,7 @@ class _RutinaScreenState extends State<RutinaScreen> {
           if (isEdit)
             IconButton(
                 onPressed: () {
-                  // Implementar eliminar aquí si lo deseas
+                  // TODO: implementar eliminar rutina aquí
                 },
                 icon: Icon(Icons.delete, color: theme.colorScheme.error)),
         ],
@@ -220,8 +252,7 @@ class _RutinaScreenState extends State<RutinaScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   ElevatedButton.icon(
-                    icon: Icon(Icons.star,
-                        color: theme.colorScheme.onPrimary),
+                    icon: Icon(Icons.star, color: theme.colorScheme.onPrimary),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: theme.colorScheme.primary,
                       foregroundColor: theme.colorScheme.onPrimary,
@@ -230,19 +261,17 @@ class _RutinaScreenState extends State<RutinaScreen> {
                     label: Text(isEdit ? 'Guardar cambios' : 'Crear'),
                   ),
                   OutlinedButton.icon(
-                    icon: Icon(Icons.cancel,
-                        color: theme.colorScheme.error),
+                    icon: Icon(Icons.cancel, color: theme.colorScheme.error),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: theme.colorScheme.error,
-                      side: BorderSide(
-                          color: theme.colorScheme.error, width: 1.5),
+                      side: BorderSide(color: theme.colorScheme.error, width: 1.5),
                     ),
                     onPressed: () => Navigator.pop(context),
                     label: Text('Cancelar'),
                   ),
                 ],
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -257,22 +286,19 @@ class _RutinaScreenState extends State<RutinaScreen> {
                             borderRadius: BorderRadius.circular(25.0),
                           ),
                         ),
-                        validator: (v) => v == null || v.isEmpty
-                            ? 'Escribe un nombre'
-                            : null,
+                        validator: (v) =>
+                        v == null || v.isEmpty ? 'Escribe un nombre' : null,
                       ),
                     ),
                     const SizedBox(height: 20),
                     SizedBox(
                       width: 200,
                       child: OutlinedButton.icon(
-                        icon: Icon(Icons.add,
-                            color: theme.colorScheme.primary),
+                        icon: Icon(Icons.add, color: theme.colorScheme.primary),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: theme.colorScheme.primary,
                           side: BorderSide(
-                              color: theme.colorScheme.primary,
-                              width: 1.5),
+                              color: theme.colorScheme.primary, width: 1.5),
                         ),
                         label: Text('Añadir ejercicio'),
                         onPressed: _onAddEjercicioPressed,
@@ -281,7 +307,7 @@ class _RutinaScreenState extends State<RutinaScreen> {
                   ],
                 ),
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               if (_ejercicios.isEmpty)
                 Center(child: Text('No hay ejercicios añadidos.')),
               ..._ejercicios.map((ejercicio) {
@@ -295,8 +321,7 @@ class _RutinaScreenState extends State<RutinaScreen> {
                   },
                   series: _seriesPorEjercicio[ejercicio] ?? [],
                   onAddSerie: () => _agregarSerie(ejercicio),
-                  onEliminarSerie: (index) =>
-                      _eliminarSerie(ejercicio, index),
+                  onEliminarSerie: (index) => _eliminarSerie(ejercicio, index),
                   onActualizarTipoSerie: (index, tipo) =>
                       _actualizarTipoSerie(ejercicio, index, tipo),
                   onActualizarRepeticiones: (index, rep) =>

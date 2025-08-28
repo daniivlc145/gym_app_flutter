@@ -33,7 +33,8 @@ class AuthService {
         'nombre': nombre,
         'apellidos': apellidos,
         'nombre_usuario': nombreUsuario,
-        'telefono': telefono
+        'telefono': telefono,
+        'nombre_usuario_foro': nombreUsuario
       });
 
       return insertResponse;

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gym_app/services/user_service.dart';
-import 'package:gym_app/screens/friend_profile_screen.dart';
+
+import 'otro_profile_screen.dart';
 
 class AddFriendScreen extends StatefulWidget {
   @override
@@ -116,7 +117,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                       }
                     },
                   ),
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => PerfilAmigoScreen(amigoId: usuario['pk_usuario']))),
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => OtroProfileScreen(userId: usuario['pk_usuario']))),
                 );
               },
             ),

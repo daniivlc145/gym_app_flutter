@@ -295,6 +295,26 @@ class UserService {
     }
   }
 
+  Future<void> eliminarAmigo(String otroUsuarioId) async {
+    try {
+      final user = supabase.auth.currentUser;
+      if (user == null) {
+        throw Exception('No hay usuario autenticado');
+      }
+      final userId = user.id;
+
+      await supabase
+          .from('solicitud_amistad')
+          .delete()
+          .or('and(fk_usuario_origen.eq.$userId,fk_usuario_destino.eq.$otroUsuarioId),and(fk_usuario_origen.eq.$otroUsuarioId,fk_usuario_destino.eq.$userId)')
+          .eq('estado', 'aceptado');
+      print('Amistad eliminada con éxito.');
+    } catch (e) {
+      print('Error al eliminar amigo: $e');
+      throw Exception('Error al eliminar amigo');
+    }
+  }
+
   Future<void> aceptarSolicitudAmistad(String otroUsuarioId) async {
     try {
       final user = supabase.auth.currentUser;

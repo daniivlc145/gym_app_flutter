@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-class ForumTopicsSelector extends StatefulWidget {
+
+class ForumTopicsSelector extends StatelessWidget {
   final List<String> allTopics;
   final List<String> selectedTopics;
   final ValueChanged<List<String>> onSelectionChanged;
@@ -12,44 +13,38 @@ class ForumTopicsSelector extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<ForumTopicsSelector> createState() => _ForumTopicsSelectorState();
-}
-
-class _ForumTopicsSelectorState extends State<ForumTopicsSelector> {
-  late List<String> _selected;
-
-  @override
-  void initState() {
-    super.initState();
-    _selected = List<String>.from(widget.selectedTopics);
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Wrap(
       spacing: 8,
-      runSpacing: 0,
-      children: widget.allTopics.map((topic) {
-        final selected = _selected.contains(topic);
+      runSpacing: 8,
+      children: allTopics.map((topic) {
+        final selected = selectedTopics.contains(topic);
         return ChoiceChip(
-          label: Text(topic),
+          label: Text(topic, overflow: TextOverflow.ellipsis),
           selected: selected,
           onSelected: (value) {
-            setState(() {
-              if (selected) {
-                _selected.remove(topic);
-              } else {
-                _selected.add(topic);
-              }
-              widget.onSelectionChanged(_selected);
-            });
+            final newSelection = List<String>.from(selectedTopics);
+            if (selected) {
+              newSelection.remove(topic);
+            } else {
+              newSelection.add(topic);
+            }
+            onSelectionChanged(newSelection);
           },
           selectedColor: Theme.of(context).colorScheme.primary,
           labelStyle: TextStyle(
-              color: selected ? Colors.white : Theme.of(context).colorScheme.onSurface),
+            fontWeight: FontWeight.w500,
+            fontSize: 14,
+            color: selected
+                ? Colors.white
+                : Theme.of(context).colorScheme.onSurface,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
           ),
+          showCheckmark: false,
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         );
       }).toList(),
     );

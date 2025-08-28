@@ -1,10 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:gym_app/screens/social_screen.dart';
 import 'package:image_picker/image_picker.dart';
 
+import 'package:gym_app/screens/home_screen.dart';
+import '../models/Entrenamiento.dart';
 import '../models/Gimnasio.dart';
 import '../services/gimnasio_service.dart';
+import '../services/training_service.dart';
 
 class ConfirmTrainingScreen extends StatefulWidget {
   final Map<String, dynamic> datos;
@@ -26,7 +28,6 @@ class _ConfirmTrainingScreenState extends State<ConfirmTrainingScreen> {
   late int _duracion;
   late int _numEjercicios;
   late int _numSeries;
-  late List<String> _musculos;
   late Map<String, dynamic> _datosCompletos;
 
   @override
@@ -40,7 +41,6 @@ class _ConfirmTrainingScreenState extends State<ConfirmTrainingScreen> {
     _duracion = args['duracion'] ?? 0;
     _numEjercicios = args['ejercicios'] ?? 0;
     _numSeries = args['series'] ?? 0;
-    _musculos = List<String>.from(args['musculos'] ?? []);
     _datosCompletos = args;
 
     _gimnasiosFuture = GimnasioService().getGimnasiosDeUsuarioActivo();
@@ -113,6 +113,7 @@ class _ConfirmTrainingScreenState extends State<ConfirmTrainingScreen> {
     return '${mins} min';
   }
 
+  /// 👉 Guardar entrenamiento en Supabase
   void _guardarEntrenamiento() async {
     if (_gimnasioSeleccionado == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -128,33 +129,35 @@ class _ConfirmTrainingScreenState extends State<ConfirmTrainingScreen> {
       return;
     }
 
-    final datosFinales = {
-      'nombre'    : _nombreController.text.trim(),
-      'descripcion': _descripcionController.text.trim(),
-      'gimnasio'  : _gimnasioSeleccionado,
-      'imagenes'  : _imagenes.map((img) => img.path).toList(),
-      'duracion'  : _duracion,
-      'ejercicios': _numEjercicios,
-      'series'    : _numSeries,
-      'musculos'  : _musculos,
-      'detalles'  : _datosCompletos['detalles'], // 👈 JSON con reps/peso/series
-    };
-
     try {
-      // 👉 Aquí llamas a tu servicio real para guardar en la BD
-      // await EntrenamientoService().guardarEntrenamiento(datosFinales);
+      // 1) Construir el objeto Entrenamiento
+      final entrenamiento = Entrenamiento(
+        pk_entrenamiento: "", // se genera en Supabase
+        nombre: _nombreController.text.trim(),
+        descripcion: _descripcionController.text.trim(),
+        fkUsuario: "", // lo mete el servicio con el user actual
+        ejercicios: _datosCompletos['detalles'], // JSON con todos los ejercicios/series
+        fecha: DateTime.now(),
+        duracion: Duration(minutes: _duracion),
+        rutinaId: _gimnasioSeleccionado, // gym seleccionado
+        fotos: _imagenes.map((img) => File(img.path)).toList(),
+      );
 
-      // 🟢 Mostrar mensaje
+
+      await TrainingService().guardarEntrenamiento(entrenamiento);
+
+      // 3) Mostrar confirmación y navegar a Home
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('✅ Entrenamiento guardado correctamente')),
       );
 
-       Navigator.of(context).pushAndRemoveUntil(
-         MaterialPageRoute(builder: (_) => SocialScreen()),
-         (route) => false,
-       );
-
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => HomeScreen()),
+            (route) => false,
+      );
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('❌ Error al guardar: $e')),
       );
@@ -197,26 +200,6 @@ class _ConfirmTrainingScreenState extends State<ConfirmTrainingScreen> {
                     _buildResumenItem(Icons.fitness_center, 'Ejercicios', '$_numEjercicios ejercicios'),
                     const SizedBox(height: 8),
                     _buildResumenItem(Icons.format_list_numbered, 'Series', '$_numSeries series completadas'),
-                    if (_musculos.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(Icons.accessibility_new, color: theme.colorScheme.primary, size: 20),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Wrap(
-                              spacing: 8,
-                              runSpacing: 4,
-                              children: _musculos.map((musculo) => Chip(
-                                label: Text(musculo, style: const TextStyle(fontSize: 12)),
-                                padding: const EdgeInsets.all(4),
-                              )).toList(),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
                   ],
                 ),
               ),
@@ -254,7 +237,7 @@ class _ConfirmTrainingScreenState extends State<ConfirmTrainingScreen> {
 
             const SizedBox(height: 16),
 
-            /// --- Selección de gimnasio con FutureBuilder
+            /// --- Selección de gimnasio
             FutureBuilder<List<Gimnasio>>(
               future: _gimnasiosFuture,
               builder: (context, snapshot) {
@@ -271,7 +254,7 @@ class _ConfirmTrainingScreenState extends State<ConfirmTrainingScreen> {
                 return DropdownButtonFormField<String>(
                   value: (gimnasios.any((g) => g.pk_gimnasio == _gimnasioSeleccionado))
                       ? _gimnasioSeleccionado
-                      : null, // 👈 solo asigna el value si está en la lista
+                      : null,
                   decoration: const InputDecoration(
                     labelText: 'Gimnasio',
                     border: OutlineInputBorder(),

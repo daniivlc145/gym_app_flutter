@@ -187,7 +187,7 @@ class SerieEditor extends StatelessWidget {
                             ),
                           ),
                         ),
-                        if (serie.tipo == TipoSerie.dropset)
+                        if (serie.tipo == TipoSerie.dropset && serie.subseries != null)
                             Padding(
                               padding: const EdgeInsets.only(left: 32, top: 4, right: 0, bottom: 4),
                               child: Column(

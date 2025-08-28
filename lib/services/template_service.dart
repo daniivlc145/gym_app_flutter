@@ -83,27 +83,21 @@ class TemplateService {
   }
 
   Future<Map<String, dynamic>> getRutinaPorId(String id) async {
-    try {
-      final response = await supabase
-          .from('rutina')
-          .select('*')
-          .eq('pk_rutina', id)
-          .single();
+    final response = await supabase
+        .from('rutina')
+        .select('*')
+        .eq('pk_rutina', id)
+        .single();
 
-      if (response['ejercicios'] is String) {
-        try {
-          response['ejercicios'] = jsonDecode(response['ejercicios']);
-        } catch (e) {
-          print('Error al parsear ejercicios: $e');
-          response['ejercicios'] = {};
-        }
+    if (response['ejercicios'] is String) {
+      try {
+        response['ejercicios'] = jsonDecode(response['ejercicios']);
+      } catch (_) {
+        response['ejercicios'] = [];
       }
-
-      return Map<String, dynamic>.from(response);
-    } catch (e) {
-      print('Error al obtener rutina: $e');
-      throw Exception('No se pudo cargar la rutina: $e');
     }
+
+    return Map<String, dynamic>.from(response);
   }
 
   Future<Map<String, dynamic>> crearRutina(String nombre, List<Map<String, dynamic>> ejercicios) async {
@@ -118,7 +112,7 @@ class TemplateService {
           .insert({
         'nombre': nombre,
         'fk_usuario': user.id,
-        'ejercicios': jsonEncode(ejercicios) // <-- serializa la lista
+        'ejercicios': ejercicios
       })
           .select()
           .single();
@@ -145,7 +139,7 @@ class TemplateService {
           .from('rutina')
           .update({
         'nombre': nombre,
-        'ejercicios': jsonEncode(ejercicios)
+        'ejercicios': ejercicios
       })
           .eq('pk_rutina', rutinaId)
           .select()

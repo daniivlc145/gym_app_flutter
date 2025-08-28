@@ -8,21 +8,22 @@ enum TipoSerie {
   String get nombre {
     switch (this) {
       case TipoSerie.normal:
-        return 'Normal';
+        return 'normal';
       case TipoSerie.calentamiento:
-        return 'Calentamiento';
+        return 'calentamiento';
       case TipoSerie.dropset:
-        return 'Drop Set';
+        return 'dropset';
       case TipoSerie.restpause:
-        return 'Rest-Pause';
+        return 'restpause';
       case TipoSerie.negativas:
-        return 'Negativas';
+        return 'negativas';
     }
   }
 
+  // Parsing desde string del JSON → enum
   static TipoSerie fromString(String tipo) {
     return TipoSerie.values.firstWhere(
-          (t) => t.toString().split('.').last == tipo,
+          (t) => t.nombre.toLowerCase() == tipo.toLowerCase(),
       orElse: () => TipoSerie.normal,
     );
   }
@@ -36,7 +37,7 @@ class Serie {
   final int? rir;
   final bool falloMuscular;
   final String? notas;
-  final List<Serie>? subseries;
+  final List<Serie>? subseries; // para dropsets
 
   Serie({
     required this.tipo,
@@ -71,103 +72,70 @@ class Serie {
     );
   }
 
+  // ---- FROM JSON ----
   factory Serie.fromJson(Map<String, dynamic> json) {
-    List<double> procesarPeso() {
-      if (json['peso'] is List) {
-        return (json['peso'] as List)
-            .map((p) => p is double ? p : double.tryParse(p.toString()) ?? 0.0)
-            .toList();
-      } else if (json['peso'] is double || json['peso'] is int) {
-        return [json['peso'].toDouble()];
-      } else if (json['peso'] is String) {
-        return [double.tryParse(json['peso']) ?? 0.0];
-      }
-      return [];
-    }
+    TipoSerie tipo = TipoSerie.fromString(json['tipo'] ?? 'normal');
 
-    List<int> procesarRepeticiones() {
-      if (json['repeticiones'] != null) {
-        if (json['repeticiones'] is List) {
-          return (json['repeticiones'] as List)
-              .map((r) => r is int ? r : int.tryParse(r.toString()) ?? 0)
-              .toList();
-        } else if (json['repeticiones'] is int) {
-          return [json['repeticiones']];
-        } else if (json['repeticiones'] is String) {
-          return [int.tryParse(json['repeticiones']) ?? 0];
-        }
-      } else if (json['reps'] != null) {    // <- AÑADE ESTO
-        if (json['reps'] is List) {
-          return (json['reps'] as List)
-              .map((r) => r is int ? r : int.tryParse(r.toString()) ?? 0)
-              .toList();
-        } else if (json['reps'] is int) {
-          return [json['reps']];
-        } else if (json['reps'] is String) {
-          return [int.tryParse(json['reps']) ?? 0];
-        }
-      }
-      return [];
-    }
+    if (tipo == TipoSerie.dropset && json['series'] is List) {
+      // caso dropset
+      final sub = (json['series'] as List).map((s) {
+        return Serie(
+          tipo: TipoSerie.normal,
+          numeroSerie: 0,
+          peso: [(s['peso'] == "-" ? 0.0 : (s['peso'] as num).toDouble())],
+          repeticiones: [(s['reps'] == "-" ? 0 : s['reps'] ?? 0)],
+        );
+      }).toList();
 
-    List<double> procesarPesoV2() {
-      if (json['peso'] != null) {
-        if (json['peso'] is List) {
-          return (json['peso'] as List)
-              .map((p) => p is double ? p : double.tryParse(p.toString()) ?? 0.0)
-              .toList();
-        } else if (json['peso'] is double || json['peso'] is int) {
-          return [json['peso'].toDouble()];
-        } else if (json['peso'] is String) {
-          return [double.tryParse(json['peso']) ?? 0.0];
-        }
-      } else if (json['peso'] == null && json['series'] != null && json['tipo'] == 'dropset') {
-        // Caso de dropset: múltiples pesos internos
-        // Pero aquí necesitarías lógica aparte para sub-series en dropset (ver abajo)
-        return [];
-      }
-      return [];
+      return Serie(
+        tipo: tipo,
+        numeroSerie: json['n_serie'] ?? 0,
+        peso: [],
+        repeticiones: [],
+        subseries: sub,
+      );
+    } else {
+      return Serie(
+        tipo: tipo,
+        numeroSerie: json['n_serie'] ?? json['numeroSerie'] ?? 0,
+        peso: [
+          (json['peso'] == "-" ? 0.0 : (json['peso'] as num?)?.toDouble() ?? 0.0)
+        ],
+        repeticiones: [
+          (json['reps'] == "-" ? 0 : (json['reps'] ?? json['repeticiones'] ?? 0))
+        ],
+        rir: json['rir'],
+        falloMuscular: json['falloMuscular'] ?? false,
+        notas: json['notas'],
+      );
     }
-
-    List<Serie>? subseries;
-    if (json['tipo'] == 'dropset' && json['series'] is List) {
-      subseries = (json['series'] as List)
-          .map((s) => Serie.fromJson({
-        // Aquí normalmente los subseries no traen ni tipo, ni n_serie;
-        // Solo repeticiones y peso
-        'tipo': 'normal',
-        'peso': s['peso'],
-        'repeticiones': s['reps'] ?? s['repeticiones'],
-        'numeroSerie': 0, // o algún valor si necesitas
-      }))
-          .toList();
-    }
-
-    return Serie(
-      tipo: TipoSerie.fromString(json['tipo'] ?? 'normal'),
-      peso: procesarPesoV2(), // tu campo en JSON es 'peso'
-      repeticiones: procesarRepeticiones(),
-      numeroSerie: json['numeroSerie'] ?? json['n_serie'] ?? 0,
-      rir: json['rir'],
-      falloMuscular: json['falloMuscular'] ?? false,
-      notas: json['notas'],
-      subseries: subseries,
-    );
   }
 
+  // ---- TO JSON ----
   Map<String, dynamic> toJson() {
-    final map = {
-      'tipo': tipo.toString().split('.').last,
-      'peso': peso,
-      'repeticiones': repeticiones,
-      'numeroSerie': numeroSerie,
-      'rir': rir,
-      'falloMuscular': falloMuscular,
-      'notas': notas,
-    };
-    if (subseries != null) {
-      map['subseries'] = subseries!.map((s) => s.toJson()).toList();
+    if (tipo == TipoSerie.dropset && subseries != null) {
+      return {
+        "tipo": tipo.nombre,
+        "n_serie": numeroSerie,
+        "series": subseries!.map((s) => {
+          "peso": s.peso.isEmpty || s.peso.first == 0 ? "-" : s.peso.first,
+          "reps": s.repeticiones.isEmpty || s.repeticiones.first == 0
+              ? "-"
+              : s.repeticiones.first,
+        }).toList(),
+      };
+    } else {
+      return {
+        "tipo": tipo.nombre,
+        "n_serie": numeroSerie,
+        "peso": peso.isEmpty || peso.first == 0 ? "-" : peso.first,
+        "reps": repeticiones.isEmpty || repeticiones.first == 0
+            ? "-"
+            : repeticiones.first,
+        "rir": rir,
+        "falloMuscular": falloMuscular,
+        "notas": notas,
+      };
     }
-    return map;
   }
 }

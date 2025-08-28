@@ -147,7 +147,7 @@ class TrainingSerieEditor extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 4),
                             child: _NumberField(
                               initial: repsText,
-                              onSubmit: (val) {
+                              onChanged: (val) {
                                 final num = int.tryParse(val);
                                 if (num != null) onActualizarReps(index, num);
                               },
@@ -162,7 +162,7 @@ class TrainingSerieEditor extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 4),
                             child: _NumberField(
                               initial: pesoText,
-                              onSubmit: (val) {
+                              onChanged: (val) {
                                 final num = double.tryParse(val);
                                 if (num != null) onActualizarPeso(index, num);
                               },
@@ -218,7 +218,7 @@ class TrainingSerieEditor extends StatelessWidget {
                                         padding: const EdgeInsets.symmetric(horizontal: 4),
                                         child: _NumberField(
                                           initial: subReps,
-                                          onSubmit: (v) {
+                                          onChanged: (v) {
                                             final rep = int.tryParse(v);
                                             if (rep != null) {
                                               onActualizarSubReps(index, subIndex, rep);
@@ -233,7 +233,7 @@ class TrainingSerieEditor extends StatelessWidget {
                                         padding: const EdgeInsets.symmetric(horizontal: 4),
                                         child: _NumberField(
                                           initial: subPeso,
-                                          onSubmit: (v) {
+                                          onChanged: (v) {
                                             final peso = double.tryParse(v);
                                             if (peso != null) {
                                               onActualizarSubPeso(index, subIndex, peso);
@@ -327,14 +327,13 @@ class TrainingSerieEditor extends StatelessWidget {
   }
 }
 
-// ---- INPUT DE NÚMEROS ----
 class _NumberField extends StatelessWidget {
   final String initial;
-  final void Function(String) onSubmit;
+  final void Function(String) onChanged;
 
   const _NumberField({
     required this.initial,
-    required this.onSubmit,
+    required this.onChanged,
   });
 
   @override
@@ -347,10 +346,13 @@ class _NumberField extends StatelessWidget {
       decoration: const InputDecoration(
         isDense: true,
         contentPadding: EdgeInsets.symmetric(vertical: 4, horizontal: 4),
-        border: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey), borderRadius: BorderRadius.all(Radius.circular(4))),
+        border: OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.grey),
+          borderRadius: BorderRadius.all(Radius.circular(4)),
+        ),
         hintText: "-",
       ),
-      onFieldSubmitted: onSubmit,
+      onChanged: onChanged, // <<-- en vez de onFieldSubmitted
     );
   }
 }

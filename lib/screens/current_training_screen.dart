@@ -81,10 +81,18 @@ class _CurrentTrainingScreenState extends State<CurrentTrainingScreen> {
   Future<void> _cargarRutina(Map<String, dynamic> rutina) async {
     setState(() => _isLoading = true);
     try {
-      final ejerciciosRaw = (rutina['ejercicios'] is Map &&
-          rutina['ejercicios']['ejercicios'] is List)
-          ? rutina['ejercicios']['ejercicios']
-          : [];
+      dynamic ejerciciosRaw;
+
+      if (rutina['ejercicios'] is List) {
+        // ✅ caso normal (lo que realmente tienes)
+        ejerciciosRaw = rutina['ejercicios'];
+      } else if (rutina['ejercicios'] is Map &&
+          rutina['ejercicios']['ejercicios'] is List) {
+        // 🧩 compatibilidad si alguna rutina antigua está guardada como {"ejercicios": [...]}
+        ejerciciosRaw = rutina['ejercicios']['ejercicios'];
+      } else {
+        ejerciciosRaw = [];
+      }
 
       final list = <Ejercicio>[];
       final map = <Ejercicio, List<Serie>>{};
@@ -104,8 +112,7 @@ class _CurrentTrainingScreenState extends State<CurrentTrainingScreen> {
         }
 
         final seriesRaw = ej['series'] as List<dynamic>? ?? [];
-        final seriesList =
-        List<Serie>.from(seriesRaw.map((s) => Serie.fromJson(s)));
+        final seriesList = List<Serie>.from(seriesRaw.map((s) => Serie.fromJson(s)));
 
         list.add(ejercicio);
         map[ejercicio] = seriesList;
@@ -133,16 +140,30 @@ class _CurrentTrainingScreenState extends State<CurrentTrainingScreen> {
             seriesCompletadas.contains("${ejercicio.pk_ejercicio}-${serieEntry.key}"))
             .map((serieEntry) {
           final serie = serieEntry.value;
+
+          // 👉 Caso dropset: guardar solo la PRIMERA subserie
+          if (serie.tipo == TipoSerie.dropset &&
+              serie.subseries != null &&
+              serie.subseries!.isNotEmpty) {
+            final primera = serie.subseries!.first;
+            return {
+              "n_serie": serie.numeroSerie,
+              "tipo": serie.tipo.nombre,
+              "reps": serie.subseries!.map(
+                      (s) => s.repeticiones.isNotEmpty ? s.repeticiones.first : null
+              ).toList(),
+              "peso": serie.subseries!.map(
+                      (s) => s.peso.isNotEmpty ? s.peso.first : null
+              ).toList(),
+            };
+          }
+
+          // 👉 Caso normal
           return {
             "n_serie": serie.numeroSerie,
-            "tipo": serie.tipo.toString(),
-            "reps": serie.repeticiones,
-            "peso": serie.peso,
-            if (serie.subseries != null && serie.subseries!.isNotEmpty)
-              "series": serie.subseries!.map((s) => {
-                "reps": s.repeticiones,
-                "peso": s.peso,
-              }).toList()
+            "tipo": serie.tipo.nombre,
+            "reps": serie.repeticiones.isNotEmpty ? serie.repeticiones.first : null,
+            "peso": serie.peso.isNotEmpty ? serie.peso.first : null,
           };
         }).toList();
 
@@ -210,22 +231,20 @@ class _CurrentTrainingScreenState extends State<CurrentTrainingScreen> {
       final nuevasSubs = List<Serie>.from(serie.subseries ?? []);
       if (subIndex < nuevasSubs.length) {
         final sub = nuevasSubs[subIndex];
-        nuevasSubs[subIndex] =
-            sub.copyWith(repeticiones: [...sub.repeticiones, rep]);
+        nuevasSubs[subIndex] = sub.copyWith(repeticiones: [rep]); // sobrescribimos
       }
       _seriesPorEjercicio[e]![serieIndex] =
           serie.copyWith(subseries: nuevasSubs);
     });
   }
 
-  void _actualizarSubPeso(
-      Ejercicio e, int serieIndex, int subIndex, double peso) {
+  void _actualizarSubPeso(Ejercicio e, int serieIndex, int subIndex, double peso) {
     setState(() {
       final serie = _seriesPorEjercicio[e]![serieIndex];
       final nuevasSubs = List<Serie>.from(serie.subseries ?? []);
       if (subIndex < nuevasSubs.length) {
         final sub = nuevasSubs[subIndex];
-        nuevasSubs[subIndex] = sub.copyWith(peso: [...sub.peso, peso]);
+        nuevasSubs[subIndex] = sub.copyWith(peso: [peso]); // sobrescribimos
       }
       _seriesPorEjercicio[e]![serieIndex] =
           serie.copyWith(subseries: nuevasSubs);
@@ -431,7 +450,7 @@ class _CurrentTrainingScreenState extends State<CurrentTrainingScreen> {
                         setState(() {
                           final serie = _seriesPorEjercicio[e]![j];
                           _seriesPorEjercicio[e]![j] = serie.copyWith(
-                            repeticiones: [...serie.repeticiones, rep],
+                            repeticiones: [rep], // sobrescribimos
                           );
                         });
                       },
@@ -439,7 +458,7 @@ class _CurrentTrainingScreenState extends State<CurrentTrainingScreen> {
                         setState(() {
                           final serie = _seriesPorEjercicio[e]![j];
                           _seriesPorEjercicio[e]![j] = serie.copyWith(
-                            peso: [...serie.peso, peso],
+                            peso: [peso], // sobrescribimos
                           );
                         });
                       },
