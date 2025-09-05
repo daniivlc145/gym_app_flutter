@@ -62,7 +62,7 @@ class _ForumsScreenState extends State<ForumsScreen> {
           : Column(
         children: [
           ForumFilterHeader(
-            selected: filtro,           // 👈 pasamos valor controlado
+            selected: filtro,
             onChanged: (value) {
               setState(() {
                 filtro = value;
